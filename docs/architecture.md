@@ -7,3 +7,4 @@ Notes on system design and pipeline data flows.
 - Added details on DER parsing and validity span checking algorithms.
 - Added details on DER parsing and validity span checking algorithms.
 - Formatted tables matching feature descriptions and model names.
+- Added details on DER parsing and validity span checking algorithms.
