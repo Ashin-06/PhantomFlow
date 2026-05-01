@@ -6,3 +6,4 @@ Guidelines for adding new ML models and threat detectors to the platform.
 - Test suites require mock datasets or pre-configured packet dictionaries.
 - Test suites require mock datasets or pre-configured packet dictionaries.
 - All alert models must define a list of associated MITRE TTP tags in output dataclasses.
+- Test suites require mock datasets or pre-configured packet dictionaries.
