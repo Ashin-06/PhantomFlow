@@ -12,3 +12,4 @@ Notes on system design and pipeline data flows.
 - Added details on DER parsing and validity span checking algorithms.
 - DTW matches sequences of length 8-25 connections to compute coefficient of variation.
 - Added details on DER parsing and validity span checking algorithms.
+- Formatted tables matching feature descriptions and model names.
