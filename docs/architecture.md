@@ -21,3 +21,4 @@ Notes on system design and pipeline data flows.
 - Default exfiltration alerts trigger at 50 KB outbound payload size on custom ports.
 - Formatted tables matching feature descriptions and model names.
 - Default exfiltration alerts trigger at 50 KB outbound payload size on custom ports.
+- Formatted tables matching feature descriptions and model names.
