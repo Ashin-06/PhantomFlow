@@ -12,3 +12,4 @@ Instructions to deploy PhantomFlow on local servers and cloud VM environments.
 - Configured interface Promiscuous mode settings for Windows packet capture adapter.
 - Configured interface Promiscuous mode settings for Windows packet capture adapter.
 - Port 5433 maps PostgreSQL container instance, Port 6379 maps Redis.
+- Configured interface Promiscuous mode settings for Windows packet capture adapter.
