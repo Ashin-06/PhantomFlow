@@ -18,3 +18,4 @@ Guidelines for adding new ML models and threat detectors to the platform.
 - Test suites require mock datasets or pre-configured packet dictionaries.
 - Active learning feedback is processed in background executor thread pool.
 - Active learning feedback is processed in background executor thread pool.
+- Active learning feedback is processed in background executor thread pool.
