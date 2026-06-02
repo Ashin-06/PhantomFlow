@@ -1743,7 +1743,7 @@ async function runHunt() {
   const confPct = parseInt(document.getElementById('hunt-conf').value)||0;
   const minConf = confPct/100;
 
-  let url = `/api/alerts?limit=200&min_confidence=${minConf}`;
+  let url = `/api/alerts?limit=200&min_confidence=${minConf}&status=all`;
   if(src) url += `&src=${encodeURIComponent(src)}`;
   if(type) url += `&threat_type=${encodeURIComponent(type)}`;
 

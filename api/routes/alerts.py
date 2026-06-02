@@ -17,6 +17,7 @@ async def list_alerts(
     threat_type: Optional[ThreatType] = None,
     src: Optional[str] = None,
     min_confidence: float = Query(0.0, ge=0.0, le=1.0),
+    status: str = Query("unreviewed"),
 ):
     """List alerts with filtering from PostgreSQL (asyncpg)."""
     db = get_db(request)
@@ -44,6 +45,10 @@ async def list_alerts(
     if min_confidence > 0:
         args.append(min_confidence)
         query_parts.append(f"AND a.confidence >= ${len(args)}")
+        
+    if status != "all":
+        args.append(status)
+        query_parts.append(f"AND a.analyst_status = ${len(args)}")
         
     # Get total count
     count_query = "SELECT COUNT(*) FROM alerts a JOIN flows f ON a.flow_id = f.flow_id WHERE" + " ".join(query_parts).split("WHERE")[1]
@@ -97,6 +102,7 @@ async def list_alerts(
             explanation=alert_dict.get("explanation", ""),
             shap_values=raw_shap,
             mitre_ttps=raw_mitre,
+            analyst_status=alert_dict.get("analyst_status", "unreviewed"),
         ))
 
     return AlertListResponse(alerts=alerts, total=total)
@@ -157,5 +163,6 @@ async def get_alert(request: Request, alert_id: str):
         explanation=alert_dict.get("explanation", ""),
         shap_values=raw_shap,
         mitre_ttps=raw_mitre,
+        analyst_status=alert_dict.get("analyst_status", "unreviewed"),
     )
 
