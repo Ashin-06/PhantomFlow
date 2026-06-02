@@ -2,14 +2,63 @@
 """
 Orchestrates and launches all PhantomFlow services (API, Orchestrator, and Sniffer) 
 concurrently in a single terminal window. Handles clean teardown on Ctrl+C.
+Includes automatic port cleanup and Kafka readiness checks.
 """
 import sys
 import subprocess
 import time
 import signal
+import socket
 import os
 
 processes = []
+
+def kill_process_on_port(port):
+    """Scan and kill any process currently listening on the specified port (Windows specific)."""
+    try:
+        # Run netstat to find listening process on this port
+        output = subprocess.check_output(
+            f"netstat -ano | findstr LISTENING | findstr :{port}", 
+            shell=True
+        ).decode()
+        
+        pids_killed = set()
+        for line in output.strip().split("\n"):
+            parts = line.strip().split()
+            if len(parts) >= 5:
+                pid = parts[-1]
+                if pid not in pids_killed and pid != "0":
+                    print(f"[System] Port {port} is in use by PID {pid}. Terminating process...")
+                    subprocess.run(
+                        f"taskkill /PID {pid} /F", 
+                        shell=True, 
+                        stdout=subprocess.DEVNULL, 
+                        stderr=subprocess.DEVNULL
+                    )
+                    pids_killed.add(pid)
+        if pids_killed:
+            time.sleep(1.5)  # Give OS a moment to free the socket
+    except Exception:
+        # Will raise exception if netstat returns no lines, which is normal when port is free
+        pass
+
+def wait_for_kafka(port=9092, timeout=60):
+    """Wait for Kafka TCP port to be open and accepting connections."""
+    print(f"[System] Waiting for Kafka message broker (port {port}) to be ready...")
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1.0)
+                # Try to connect to localhost port 9092
+                if s.connect_ex(('127.0.0.1', port)) == 0:
+                    print("[System] Kafka is online and accepting connections!")
+                    return True
+        except Exception:
+            pass
+        time.sleep(1)
+    print(f"[System] WARNING: Kafka (port {port}) did not become ready within {timeout} seconds.")
+    return False
 
 def cleanup_processes():
     print("\n[System] Stopping all PhantomFlow services...")
@@ -38,6 +87,13 @@ def main():
     python_exe = sys.executable
     print(f"[System] Using Python executable: {python_exe}")
 
+    # 1. Clean up orphaned sockets on port 8000 (API) and 8080 (Orchestrator Health)
+    kill_process_on_port(8000)
+    kill_process_on_port(8080)
+
+    # 2. Wait for Kafka to fully boot up in its container
+    wait_for_kafka(9092)
+
     # Define the services to start
     services = [
         ("FastAPI Server", [python_exe, "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]),
@@ -49,16 +105,15 @@ def main():
     for name, cmd in services:
         print(f"[System] Starting {name}...")
         try:
-            # On Windows, we can use CREATE_NEW_PROCESS_GROUP or just start it normal
             proc = subprocess.Popen(
                 cmd,
-                stdout=None,  # Inherit stdout to stream directly to terminal
-                stderr=None,  # Inherit stderr
+                stdout=None,  # Stream output directly to terminal
+                stderr=None,
                 bufsize=1,
                 universal_newlines=True
             )
             processes.append((name, proc))
-            # Give it a second to bind ports/initialize before starting next service
+            # Wait briefly to let service start up
             time.sleep(1.5)
         except Exception as e:
             print(f"[System] Failed to start {name}: {e}")

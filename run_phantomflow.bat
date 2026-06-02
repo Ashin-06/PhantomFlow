@@ -30,11 +30,6 @@ echo [System] Starting infrastructure containers (Postgres, Redis, Kafka)...
 docker compose -f docker/docker-compose.yml up -d
 
 echo.
-echo [System] Waiting for Kafka message broker (port 9092) to initialize and accept connections...
-powershell -Command "while (-not (Test-NetConnection localhost -Port 9092 -WarningAction SilentlyContinue).TcpTestSucceeded) { Start-Sleep -Seconds 1 }"
-echo [System] Kafka is online and accepting traffic!
-
-echo.
 echo [System] Resetting databases to clean slate (zero-mock counters)...
 python ..\clear_db.py
 
