@@ -375,7 +375,7 @@
       font-family: var(--font-mono);
     }
 
-    /* Flowchart / SVGs */
+    /* Flowcharts & Visual SVGs */
     .flowchart {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -429,6 +429,54 @@
     .flow-line.highlight {
       stroke: var(--teal);
       marker-end: url(#arrow-teal);
+    }
+
+    /* Timeline Styles */
+    .timeline-container {
+      margin: 30px 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border-left: 2px solid var(--border);
+      padding-left: 20px;
+      margin-left: 10px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 25px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -27px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      background: var(--bg);
+      border: 2px solid var(--teal);
+      border-radius: 50%;
+      z-index: 10;
+    }
+    .timeline-item.completed::before {
+      background: var(--teal);
+    }
+    .timeline-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--teal);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .timeline-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .timeline-desc {
+      font-size: 13.5px;
+      color: var(--text2);
     }
 
     /* UI Layout Diagram */
@@ -818,6 +866,7 @@
         <div class="nav-title">3. Model Architectures</div>
         <ul class="nav-list">
           <li class="nav-item"><a href="#decoupled-ml" class="nav-link">Two-Stage ML Pipeline</a></li>
+          <li class="nav-item"><a href="#graphical-forensics" class="nav-link">Graphical Forensics</a></li>
           <li class="nav-item"><a href="#rule-detectors" class="nav-link">Behavioral Detectors</a></li>
           <li class="nav-item"><a href="#active-learning" class="nav-link">Active Feedback Learning</a></li>
         </ul>
@@ -876,61 +925,61 @@
     </section>
 
     <section id="genesis-phases">
-      <h2>Project Genesis, Evaluation, and Tuning Phases</h2>
+      <h2>Project Genesis & Research Evolution</h2>
       <p>PhantomFlow transitioned from a synthetic laboratory prototype to a production-hardened threat appliance through a systematic, data-driven methodology. The engineering timeline is broken down into six developmental phases:</p>
       
-      <div class="stepper">
-        <div class="step-item">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h4>Synthetic Phase 1.0 (NetworkTrafficGAN)</h4>
-            <p>Initial models were evaluated using synthetic datasets generated via Generative Adversarial Networks (GANs). The classifiers returned perfect (1.00) F1-scores. Code audits revealed the models were memorizing GAN-specific artifacts (like static TCP flags, specific packet numbers) rather than learning generalized threat structures. This phenomenon is known as "shortcut learning."</p>
+      <div class="timeline-container">
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 1</div>
+          <div class="timeline-title">Synthetic 1.0 (NetworkTrafficGAN)</div>
+          <div class="timeline-desc">
+            Evaluated models against synthetic GAN network sequences. Captured perfect 100% metrics across all estimators. However, audit analysis revealed heavy shortcut learning (memorizing TCP sequence numbers and flags specific to the GAN model).
           </div>
         </div>
-        <div class="step-item">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h4>Real-World Dataset Transition (CTU-13 & CICIDS)</h4>
-            <p>To break shortcut learning, the pipeline was transitioned to raw, real-world botnet recordings (CTU-13, containing active Neris, Murlo, and Virut families). Models trained on one botnet protocol (e.g., Neris HTTP) completely collapsed when evaluated against another (e.g., Murlo IRC), highlighting a failure to generalize under Out-of-Distribution (OOD) conditions.</p>
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 2</div>
+          <div class="timeline-title">Real Data Transition (CTU-13 & CICIDS)</div>
+          <div class="timeline-desc">
+            Re-trained models against active botnet recordings. The C2 and Exfiltration models collapsed when tested under Out-of-Distribution (OOD) scenarios (e.g., training on Neris HTTP botnet, and evaluating on Murlo IRC botnet). This forced a shift away from protocol-specific metrics.
           </div>
         </div>
-        <div class="step-item">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h4>Protocol-Invariant Calibration</h4>
-            <p>We conducted ablation studies and discarded 44 fields (including protocol numbers, transport flags, and port metadata) from the core model inputs. This left only <strong>6 invariant volumetric features</strong> (durations, bytes ratios, packet distributions). Removing specific protocols forced the model's decision boundary to learn structural traffic constraints. Under this OOD benchmark, model recall stabilized at <strong>79.55%</strong>, though Stage 1 precision remained low at <strong>7.51%</strong>.</p>
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 3</div>
+          <div class="timeline-title">Protocol Invariant Discovery & Calibration</div>
+          <div class="timeline-desc">
+            Conducted ablation studies and removed 44 columns, including protocols, TCP flags, and ports. Retained only 6 invariant flow dimensions. Benchmarks showed recall stabilized at 79.55%, although Stage 1 precision dropped to 7.51% due to benign periodic signals (NTP/DNS).
           </div>
         </div>
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div class="step-content">
-            <h4>Stage 2 Precision Recovery Audit</h4>
-            <p>A precision recovery audit was launched to filter false alarms out of Stage 1. Early heuristic approaches dramatically hurt recall (dropping it to 37.3%). Supervised Random Forests trained on volumetric dimensions overfitted to the training protocols. The engineering group decided that Stage 2 must rely entirely on temporal and sequence-frequency patterns to maintain OOD recall.</p>
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 4</div>
+          <div class="timeline-title">Stage 2 Precision Recovery Audit</div>
+          <div class="timeline-desc">
+            Analyzed heuristic and supervised model additions to filter out False Positives. Early heuristic filters dropped OOD recall for Virut P2P to 37.3%. Random Forest meta-estimators overfitted to volumetric shapes. We determined that Stage 2 must rely strictly on temporal sequence-interval patterns.
           </div>
         </div>
-        <div class="step-item">
-          <div class="step-number">5</div>
-          <div class="step-content">
-            <h4>Temporal-Only Context Engineering & Exfiltration Hardening</h4>
-            <p>Stage 2 was updated to use a temporal-only feature subset (coefficient of variation of inter-arrival times, sequence trends, duration variances) over a history of up to 15 flows. In tandem, the Exfiltration subsystem was updated to handle missing features (NaNs) and tested against unseen organic streams. This raised OOD C2 precision to <strong>89%</strong>, and stabilized exfiltration detection at a <strong>0.74 F1-score</strong>.</p>
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 5</div>
+          <div class="timeline-title">Temporal-Only Tuning & Exfil Validation</div>
+          <div class="timeline-desc">
+            Ablated volumetric values from the Random Forest. Trained using only temporal metrics over a history of up to 15 flows. Hardened the Exfiltration subsystem against coordination failures. Yielded 89% precision on OOD Murlo IRC, and a 0.74 F1-score on organic exfiltration validation sets.
           </div>
         </div>
-        <div class="step-item">
-          <div class="step-number">6</div>
-          <div class="step-content">
-            <h4>Production Calibration & Evaluation (Current State)</h4>
-            <p>To refine the appliance for production, we injected explicit negative benign periodic templates (like NTP queries, DNS health checks, AV updates) directly into the training loop, raising Stage 1 baseline precision to <strong>12.84%</strong>. The Stage 2 Random Forest was calibrated at a decision threshold of <code>0.45</code>, achieving **77.08% precision** on OOD protocols. The Exfiltration detector was hardened using destination-IP history context, yielding **100% precision** with zero false alerts on benign volumetric spikes.</p>
+        <div class="timeline-item completed">
+          <div class="timeline-date">PHASE 6</div>
+          <div class="timeline-title">Production Calibration & Metric Swell (Current)</div>
+          <div class="timeline-desc">
+            Injected explicit negative benign periodic templates (NTP, DNS heartbeats) into the Stage 1 training set, doubling baseline precision to 12.84%. Integrated autocorrelation features into Stage 2, achieving 77.08% precision. Exfiltration was updated to use a destination IP context filter, yielding 100% precision.
           </div>
         </div>
       </div>
     </section>
 
     <section id="pipeline-architecture">
-      <h2>Core Pipeline Architecture Flow</h2>
-      <p>The flow of raw frames through capture, streaming, orchestration, feature modeling, and presentation is shown in the diagram below:</p>
+      <h2>Comprehensive System Architecture & Data Flow</h2>
+      <p>The layout below traces network frames from the physical network interface card (NIC) TAP, through Scapy capture pipelines, the Kafka streaming message broker, feature extractors, the ensemble model, database storage, and presentation APIs:</p>
       
       <div class="flowchart">
-        <svg width="760" height="300" viewBox="0 0 760 300">
+        <svg width="880" height="560" viewBox="0 0 880 560">
           <defs>
             <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
               <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
@@ -940,288 +989,407 @@
             </marker>
           </defs>
 
-          <!-- Sniffer & Capture -->
-          <g transform="translate(10, 110)">
-            <rect width="90" height="60" class="node active"/>
-            <text x="45" y="24" class="node-text title">SPAN/TAP Port</text>
-            <text x="45" y="40" class="node-text">Scapy Packet</text>
-            <text x="45" y="52" class="node-text">Capturer</text>
+          <!-- Subgraph: Capture Layer -->
+          <rect x="10" y="20" width="165" height="520" fill="none" stroke="var(--teal)" stroke-dasharray="4,4" rx="8" ry="8"/>
+          <text x="92.5" y="40" font-family="var(--font-mono)" font-size="11" fill="var(--teal)" text-anchor="middle" font-weight="700">CAPTURE LAYER</text>
+          
+          <g transform="translate(20, 60)">
+            <rect width="145" height="50" class="node active"/>
+            <text x="72.5" y="22" class="node-text title">SPAN/TAP Port</text>
+            <text x="72.5" y="38" class="node-text">NIC Interface</text>
           </g>
 
-          <g transform="translate(130, 110)">
-            <rect width="95" height="60" class="node active"/>
-            <text x="47.5" y="24" class="node-text title">PCAP Filter</text>
-            <text x="47.5" y="40" class="node-text">Excludes</text>
-            <text x="47.5" y="52" class="node-text">Loopback/Ports</text>
+          <g transform="translate(20, 180)">
+            <rect width="145" height="50" class="node active"/>
+            <text x="72.5" y="22" class="node-text title">pcap_fallback.py</text>
+            <text x="72.5" y="38" class="node-text">Scapy Packet Sniffer</text>
           </g>
 
-          <g transform="translate(255, 110)">
-            <rect width="95" height="60" class="node active"/>
-            <text x="47.5" y="24" class="node-text title">Kafka Broker</text>
-            <text x="47.5" y="40" class="node-text">Port 9092</text>
-            <text x="47.5" y="52" class="node-text">network-flows</text>
+          <g transform="translate(20, 300)">
+            <rect width="145" height="50" class="node active"/>
+            <text x="72.5" y="22" class="node-text title">Kafka Producer</text>
+            <text x="72.5" y="38" class="node-text">Admin Exclusions</text>
           </g>
 
-          <!-- Ingest Orchestration -->
-          <g transform="translate(380, 110)">
-            <rect width="100" height="60" class="node active"/>
-            <text x="50" y="24" class="node-text title">Orchestrator</text>
-            <text x="50" y="40" class="node-text">pipeline/</text>
-            <text x="50" y="52" class="node-text">orchestrator.py</text>
+          <!-- Connections in Capture -->
+          <path d="M92.5 110 V180" class="flow-line highlight"/>
+          <path d="M92.5 230 V300" class="flow-line highlight"/>
+
+          <!-- Subgraph: Streaming Broker -->
+          <rect x="195" y="20" width="165" height="520" fill="none" stroke="var(--blue)" stroke-dasharray="4,4" rx="8" ry="8"/>
+          <text x="277.5" y="40" font-family="var(--font-mono)" font-size="11" fill="var(--blue)" text-anchor="middle" font-weight="700">STREAMING BROKER</text>
+
+          <g transform="translate(205, 180)">
+            <rect width="145" height="60" class="node active" style="stroke: var(--blue); fill: rgba(0, 176, 255, 0.05);"/>
+            <text x="72.5" y="22" class="node-text title">Kafka Broker</text>
+            <text x="72.5" y="38" class="node-text">Port 9092</text>
+            <text x="72.5" y="50" class="node-text">Topic: network-flows</text>
           </g>
 
-          <!-- Detectors & Classifiers -->
-          <g transform="translate(510, 20)">
-            <rect width="115" height="65" class="node model"/>
-            <text x="57.5" y="22" class="node-text title" style="fill:var(--blue)">Two-Stage C2</text>
-            <text x="57.5" y="38" class="node-text">1. Invariant SGD</text>
-            <text x="57.5" y="50" class="node-text">2. RF Periodicity</text>
-            <text x="57.5" y="60" class="node-text">(Thresh=0.45)</text>
+          <path d="M165 325 H185 V210 H205" class="flow-line highlight"/>
+
+          <!-- Subgraph: ML Pipeline & Processing -->
+          <rect x="380" y="20" width="320" height="520" fill="none" stroke="var(--amber)" stroke-dasharray="4,4" rx="8" ry="8"/>
+          <text x="540" y="40" font-family="var(--font-mono)" font-size="11" fill="var(--amber)" text-anchor="middle" font-weight="700">ML PIPELINE & PROCESSING</text>
+
+          <g transform="translate(390, 60)">
+            <rect width="140" height="40" class="node model"/>
+            <text x="70" y="18" class="node-text title">orchestrator.py</text>
+            <text x="70" y="32" class="node-text">Kafka Consumer</text>
           </g>
 
-          <g transform="translate(510, 105)">
-            <rect width="115" height="65" class="node model"/>
-            <text x="57.5" y="22" class="node-text title" style="fill:var(--blue)">Exfil Subsystem</text>
-            <text x="57.5" y="38" class="node-text">Isolation Forest</text>
-            <text x="57.5" y="50" class="node-text">+ Gradient Boost</text>
-            <text x="57.5" y="60" class="node-text">(Dest Context)</text>
+          <g transform="translate(390, 140)">
+            <rect width="140" height="40" class="node model"/>
+            <text x="70" y="18" class="node-text title">extractor.py</text>
+            <text x="70" y="32" class="node-text">Feature Engineering</text>
           </g>
 
-          <g transform="translate(510, 190)">
-            <rect width="115" height="65" class="node rule"/>
-            <text x="57.5" y="22" class="node-text title" style="fill:var(--amber)">Rule Engines</text>
-            <text x="57.5" y="38" class="node-text">Port Scans (HLL)</text>
-            <text x="57.5" y="50" class="node-text">Lateral, Brute</text>
-            <text x="57.5" y="60" class="node-text">& Ransom Correl</text>
+          <g transform="translate(390, 220)">
+            <rect width="140" height="40" class="node model"/>
+            <text x="70" y="18" class="node-text title">ensemble.py</text>
+            <text x="70" y="32" class="node-text">Ensemble Inference</text>
           </g>
 
-          <!-- Data Store -->
-          <g transform="translate(655, 105)">
-            <rect width="95" height="65" class="node data"/>
-            <text x="47.5" y="22" class="node-text title" style="fill:var(--purple)">Data Layers</text>
-            <text x="47.5" y="38" class="node-text">PostgreSQL 15</text>
-            <text x="47.5" y="50" class="node-text">Redis Cache</text>
-            <text x="47.5" y="60" class="node-text">& WebSockets</text>
+          <!-- Sub-subgraph models -->
+          <rect x="545" y="110" width="145" height="185" fill="none" stroke="var(--text4)" stroke-dasharray="2,2" rx="4" ry="4"/>
+          <text x="617.5" y="125" font-family="var(--font-sans)" font-size="9" fill="var(--text3)" text-anchor="middle" font-weight="700">ML MODELS</text>
+          
+          <g transform="translate(552, 135)">
+            <rect width="130" height="30" class="node model"/>
+            <text x="65" y="18" class="node-text" style="font-size:9px; font-weight:bold;">LSTM C2 Beacon</text>
+          </g>
+          <g transform="translate(552, 180)">
+            <rect width="130" height="30" class="node model"/>
+            <text x="65" y="18" class="node-text" style="font-size:9px; font-weight:bold;">XGBoost DNS</text>
+          </g>
+          <g transform="translate(552, 225)">
+            <rect width="130" height="30" class="node model"/>
+            <text x="65" y="18" class="node-text" style="font-size:9px; font-weight:bold;">Isolation Forest</text>
           </g>
 
-          <!-- Connections -->
-          <path d="M100 140 H130" class="flow-line highlight"/>
-          <path d="M225 140 H255" class="flow-line highlight"/>
-          <path d="M350 140 H380" class="flow-line highlight"/>
+          <g transform="translate(390, 360)">
+            <rect width="140" height="40" class="node model"/>
+            <text x="70" y="18" class="node-text title">Logistic Regression</text>
+            <text x="70" y="32" class="node-text">Meta-Learner Model</text>
+          </g>
 
-          <path d="M480 130 L510 52.5" class="flow-line highlight"/>
-          <path d="M480 140 H510" class="flow-line highlight"/>
-          <path d="M480 150 L510 222.5" class="flow-line highlight"/>
+          <g transform="translate(390, 440)">
+            <rect width="140" height="40" class="node model"/>
+            <text x="70" y="18" class="node-text title">SHAP Explainer</text>
+            <text x="70" y="32" class="node-text">Feature Importance</text>
+          </g>
 
-          <path d="M625 52.5 L655 130" class="flow-line highlight"/>
-          <path d="M625 137.5 H655" class="flow-line highlight"/>
-          <path d="M625 222.5 L655 145" class="flow-line highlight"/>
+          <!-- ML connections -->
+          <path d="M350 210 H370 V80 H390" class="flow-line highlight"/>
+          <path d="M460 100 V140" class="flow-line highlight"/>
+          <path d="M460 180 V220" class="flow-line highlight"/>
+
+          <path d="M530 240 H540 V150 H552" class="flow-line highlight"/>
+          <path d="M530 240 H552" class="flow-line highlight"/>
+          <path d="M530 240 H540 V240 H552" class="flow-line highlight"/>
+
+          <path d="M682 150 H692 V380 H530" class="flow-line highlight"/>
+          <path d="M682 195 H692 V380" class="flow-line"/>
+          <path d="M682 240 H692 V380" class="flow-line"/>
+
+          <path d="M460 400 V440" class="flow-line highlight"/>
+
+          <!-- Subgraph: Suppression & Storage -->
+          <rect x="715" y="20" width="150" height="240" fill="none" stroke="var(--purple)" stroke-dasharray="4,4" rx="8" ry="8"/>
+          <text x="790" y="40" font-family="var(--font-mono)" font-size="11" fill="var(--purple)" text-anchor="middle" font-weight="700">STORAGE & LOGS</text>
+
+          <g transform="translate(725, 60)">
+            <rect width="130" height="35" class="node data"/>
+            <text x="65" y="20" class="node-text title" style="fill:var(--purple)">Suppression Engine</text>
+          </g>
+          <g transform="translate(725, 120)">
+            <rect width="130" height="35" class="node data"/>
+            <text x="65" y="20" class="node-text title" style="fill:var(--purple)">PostgreSQL 15</text>
+          </g>
+          <g transform="translate(725, 180)">
+            <rect width="130" height="35" class="node data"/>
+            <text x="65" y="20" class="node-text title" style="fill:var(--purple)">Redis Server</text>
+          </g>
+
+          <path d="M530 460 H710 V77 H725" class="flow-line highlight"/>
+          <path d="M855 77 V120" class="flow-line"/>
+          <path d="M855 77 V180 H855" class="flow-line"/>
+
+          <!-- Subgraph: Presentation & Dashboard -->
+          <rect x="715" y="275" width="150" height="265" fill="none" stroke="var(--red)" stroke-dasharray="4,4" rx="8" ry="8"/>
+          <text x="790" y="295" font-family="var(--font-mono)" font-size="11" fill="var(--red)" text-anchor="middle" font-weight="700">PRESENTATION</text>
+
+          <g transform="translate(725, 315)">
+            <rect width="130" height="35" class="node active" style="stroke: var(--red); fill: rgba(255, 71, 87, 0.05);"/>
+            <text x="65" y="20" class="node-text title" style="fill:var(--red)">FastAPI Server</text>
+          </g>
+          <g transform="translate(725, 380)">
+            <rect width="130" height="35" class="node active" style="stroke: var(--red); fill: rgba(255, 71, 87, 0.05);"/>
+            <text x="65" y="20" class="node-text title" style="fill:var(--red)">WebSockets</text>
+          </g>
+          <g transform="translate(725, 470)">
+            <rect width="130" height="50" class="node active" style="stroke: var(--teal); fill: rgba(0, 212, 170, 0.05);"/>
+            <text x="65" y="22" class="node-text title" style="fill:var(--teal)">SOC Dashboard</text>
+            <text x="65" y="38" class="node-text">HTML / JS Console</text>
+          </g>
+
+          <path d="M790 155 V315" class="flow-line"/>
+          <path d="M790 215 V380" class="flow-line"/>
+          <path d="M790 350 V470" class="flow-line highlight"/>
+          <path d="M790 415 V470" class="flow-line highlight"/>
         </svg>
       </div>
     </section>
 
     <!-- 2. Ingestion & Features -->
     <section id="packet-sniffer">
-      <h2>2. Data Ingestion & Feature Extraction</h2>
+      <h2>2. Data Ingestion & Sniffer Controls</h2>
       <h3>A. Raw PCAP Capture and Sniffer Filters</h3>
-      <p>The ingestion architecture starts at the <strong>Packet Sniffer</strong> (<code>capture/pcap_fallback.py</code>). This sniffer attaches to the primary network interface via Python's <code>scapy</code> library. To prevent infinite loops and internal communication spikes from polluting threat telemetry database structures, loopback packets and platform system ports are filtered out at the kernel/socket wrapper layer:</p>
+      <p>The capture tier (<code>capture/pcap_fallback.py</code>) utilizes Python's <code>scapy</code> library to snif traffic. To keep management traffic from polluting the threat telemetry logs, internal loopbacks and administrator interface ports are excluded:</p>
       
-      <pre><span class="pre-lang">python</span><code># Ingestion filtering inside capture/pcap_fallback.py
-def should_filter_packet(src_ip, dst_ip, sport, dport):
-    # Rule 1: Exclude internal system loopback loop and interface communications
-    if src_ip in ("127.0.0.1", "::1") or dst_ip in ("127.0.0.1", "::1"):
-        return True
-        
-    # Rule 2: Exclude infrastructure and microservices management ports
-    # 9092/9093 (Kafka), 6379 (Redis), 5432/5433 (Postgres), 8000 (FastAPI API), 8080 (UI Server)
+      <pre><span class="pre-lang">python</span><code># Port exclusion and loopback screening inside capture/pcap_fallback.py
+def inspect_frame(pkt):
+    if not pkt.haslayer(IP):
+        return
+    ip_src = pkt[IP].src
+    ip_dst = pkt[IP].dst
+
+    # Exclude internal loopback diagnostics
+    if ip_src in ("127.0.0.1", "::1") or ip_dst in ("127.0.0.1", "::1"):
+        return
+
+    # Exclude admin and database sockets
     system_ports = {9092, 9093, 6379, 5432, 5433, 8000, 8080}
+    sport = pkt[TCP].sport if pkt.haslayer(TCP) else (pkt[UDP].sport if pkt.haslayer(UDP) else 0)
+    dport = pkt[TCP].dport if pkt.haslayer(TCP) else (pkt[UDP].dport if pkt.haslayer(UDP) else 0)
+
     if sport in system_ports or dport in system_ports:
-        return True
-        
-    return False</code></pre>
-      
-      <p>Packets passing these validation gates are accumulated into 60-second flow objects. Once a window closes, flow objects are serialized to JSON and published to the <code>network-flows</code> Kafka topic running on port <code>9092</code>.</p>
+        return # Discard management payload
+
+    # Forward to Kafka Producer...</code></pre>
     </section>
 
     <section id="feature-extraction">
-      <h2>B. Feature Engineering Equations</h2>
-      <p>When the Kafka consumer in <code>pipeline/orchestrator.py</code> pulls a raw flow session, the <strong>Feature Extractor</strong> (<code>features/extractor.py</code>) maps packet sequences into statistical, protocol-invariant vectors. The key equations are defined below:</p>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--teal);">
-          <span>📈</span>
-          <span>Inter-Arrival Time Coefficient of Variation (IAT CV)</span>
-        </div>
-        <p>This metric represents interval frequency variance divided by mean interval size. In periodic command-and-control beacon structures, the interval is static, meaning IAT variance approaches zero, leading to <code>IAT CV ≈ 0</code>. Human web browsing yields highly irregular intervals, making <code>IAT CV >> 1</code>:</p>
-        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--teal); background: rgba(0,212,170,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(0,212,170,0.2);">
-          \mu = \frac{1}{N}\sum_{i=1}^{N} IAT_i, \quad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(IAT_i - \mu)^2}, \quad IAT\ CV = \frac{\sigma}{\mu}
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--blue);">
-          <span>🌐</span>
-          <span>Shannon Entropy of SNI / DNS Names</span>
-        </div>
-        <p>This metric measures domain label character randomness. Attackers tunneling data over DNS, or using domain generation algorithms (DGA) to avoid static list blockages, produce high-entropy strings:</p>
-        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--blue); background: rgba(0,176,255,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(0,176,255,0.2);">
-          H(X) = -\sum_{i=1}^{M} P(x_i) \log_2 P(x_i)
-        </p>
-        <p style="margin-top: 10px; font-size: 13px; color: var(--text3);">Where <code>P(x_i)</code> is the frequency of occurrence of character <code>x_i</code> in the target server name indication string or domain string of length <code>M</code>.</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--purple);">
-          <span>📊</span>
-          <span>Volumetric Invariant Ratios</span>
-        </div>
-        <p>These track physical data movement dynamics, isolating exfiltration events (high source payload, low destination response payload) regardless of the application protocol:</p>
-        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--purple); background: rgba(176,107,255,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(176,107,255,0.2);">
-          Bytes\ Ratio = \frac{\text{orig\_bytes}}{\text{resp\_bytes} + 1}, \quad Packets\ Rate = \frac{\text{orig\_pkts}}{\text{duration\_s}}
-        </p>
-      </div>
+      <h2>B. Invariant Feature Engineering</h2>
+      <p>The **Feature Extractor** (<code>features/extractor.py</code>) converts raw packet streams into statistical representations. Removing protocol-specific columns forces the ML models to learn general patterns, making them resilient to protocol evasion:</p>
+      <ul>
+        <li><strong>IAT Coefficient of Variation (CV)</strong>: Calculated as $\sigma_{\text{IAT}} / \mu_{\text{IAT}}$. Periodic C2 beacons show static intervals, meaning standard deviation is near zero ($CV \approx 0.0$). Benign user traffic is highly irregular ($CV \gg 1.0$).</li>
+        <li><strong>Shannon Entropy of SNI Names</strong>: Identifies DNS tunneling and domain generation algorithms (DGA) by analyzing character distribution randomness ($H(X) \ge 4.5$).</li>
+        <li><strong>Bytes Ratio</strong>: Ratio of sent-to-received bytes ($\frac{\text{orig\_bytes}}{\text{resp\_bytes} + 1}$), which helps isolate exfiltration events.</li>
+      </ul>
     </section>
 
     <!-- 3. Model Architectures -->
     <section id="decoupled-ml">
-      <h2>3. Machine Learning Model Architectures</h2>
-      <h3>A. Two-Stage Decoupled Detection Engine</h3>
-      <p>PhantomFlow runs a two-stage classification strategy to optimize general threat detection under out-of-distribution (OOD) scenarios. This approach captures malware families that use unknown custom protocols:</p>
+      <h2>3. Decoupled Two-Stage Threat Detection Engine</h2>
+      <p>The platform separates detection into an invariant stage and a precision stage. This design catches wide-spectrum structural anomalies while maintaining high precision on known behaviors:</p>
+      
+      <div class="flowchart">
+        <svg width="840" height="250" viewBox="0 0 840 250">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+            </marker>
+            <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#00d4aa" />
+            </marker>
+          </defs>
 
+          <!-- Nodes -->
+          <g transform="translate(10, 100)">
+            <rect width="110" height="40" class="node active"/>
+            <text x="55" y="24" class="node-text title">Flow Stream</text>
+          </g>
+
+          <g transform="translate(150, 100)">
+            <rect width="130" height="40" class="node active"/>
+            <text x="65" y="24" class="node-text title">6 Invariant Features</text>
+          </g>
+
+          <g transform="translate(310, 85)">
+            <rect width="150" height="70" class="node model"/>
+            <text x="75" y="22" class="node-text title" style="fill:var(--blue)">Stage 1 SGD/LR</text>
+            <text x="75" y="42" class="node-text">Calibrated Boundary</text>
+            <text x="75" y="56" class="node-text">z >= -3.0</text>
+          </g>
+
+          <g transform="translate(310, 10)">
+            <rect width="150" height="35" class="node"/>
+            <text x="75" y="21" class="node-text">Benign (z < -3.0)</text>
+          </g>
+
+          <g transform="translate(490, 100)">
+            <rect width="120" height="40" class="node model"/>
+            <text x="60" y="24" class="node-text title">IP History Check</text>
+          </g>
+
+          <g transform="translate(640, 100)">
+            <rect width="170" height="75" class="node model" style="stroke: var(--teal); fill: rgba(0, 212, 170, 0.05);"/>
+            <text x="85" y="22" class="node-text title" style="fill:var(--teal)">Stage 2 Random Forest</text>
+            <text x="85" y="42" class="node-text">Temporal Autocorrelation</text>
+            <text x="85" y="58" class="node-text">Threshold = 0.45</text>
+          </g>
+
+          <g transform="translate(640, 195)">
+            <rect width="170" height="35" class="node"/>
+            <text x="85" y="21" class="node-text">Benign (Prob < 0.45)</text>
+          </g>
+
+          <g transform="translate(480, 195)">
+            <rect width="130" height="40" class="node rule" style="stroke: var(--red); fill: rgba(255, 71, 87, 0.05);"/>
+            <text x="65" y="24" class="node-text title" style="fill:var(--red)">C2 Beacon Alert</text>
+          </g>
+
+          <!-- Links -->
+          <path d="M120 120 H150" class="flow-line highlight"/>
+          <path d="M280 120 H310" class="flow-line highlight"/>
+          
+          <path d="M385 85 V45" class="flow-line"/>
+          <path d="M460 120 H490" class="flow-line highlight"/>
+          <path d="M610 120 H640" class="flow-line highlight"/>
+          
+          <path d="M725 175 V195" class="flow-line"/>
+          <path d="M640 137 H625 V215 H610" class="flow-line highlight"/>
+        </svg>
+      </div>
+    </section>
+
+    <section id="graphical-forensics">
+      <h2>4. Graphical Forensics & Waveforms</h2>
+      
+      <div class="card">
+        <div class="card-title" style="color:var(--teal)">
+          <span>📊</span> Signal Waveforms: Periodic Beacons vs Benign Traffic
+        </div>
+        <p>This visualization contrasts automated beacon intervals with dynamic human interaction: </p>
+        
+        <div class="flowchart">
+          <svg width="800" height="240" viewBox="0 0 800 240">
+            <!-- Axes -->
+            <line x1="50" y1="20" x2="50" y2="200" stroke="var(--border)" stroke-width="2"/>
+            <line x1="50" y1="200" x2="780" y2="200" stroke="var(--border)" stroke-width="2"/>
+            <text x="400" y="225" class="node-text" style="font-size:11px;">Time Series Progression (Flow History Sequence)</text>
+            <text x="25" y="110" class="node-text" style="font-size:11px;" transform="rotate(-90 25 110)">Interval Gap (seconds)</text>
+            
+            <!-- Periodic Beacon wave (Square peaks at static intervals) -->
+            <path d="M 50 170 L 120 170 L 120 80 L 130 80 L 130 170 L 200 170 L 200 80 L 210 80 L 210 170 L 280 170 L 280 80 L 290 80 L 290 170 L 360 170 Q 360 170 360 170" fill="none" stroke="var(--teal)" stroke-width="3"/>
+            <text x="200" y="60" font-family="var(--font-sans)" font-size="11" fill="var(--teal)" font-weight="700">Automated C2 Beacon (Static 60s Interval: Low IAT CV)</text>
+
+            <!-- Benign wave (Chaotic, changing spacing) -->
+            <path d="M 400 170 L 430 170 L 430 100 L 440 100 L 440 170 L 520 170 L 520 60 L 530 60 L 530 170 L 570 170 L 570 130 L 580 130 L 580 170 L 690 170 L 690 50 L 700 50 L 700 170 L 760 170" fill="none" stroke="var(--blue)" stroke-width="2"/>
+            <text x="560" y="40" font-family="var(--font-sans)" font-size="11" fill="var(--blue)" font-weight="700">Benign Traffic (Random Spacing: High IAT CV)</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color:var(--blue)">
+          <span>📊</span> Dynamic SHAP Feature Contribution Representation
+        </div>
+        <p>SHAP (SHapley Additive exPlanations) scores quantify feature contributions. Positive scores push the model toward a threat verdict, while negative scores indicate benign traffic:</p>
+        
+        <div class="flowchart">
+          <svg width="800" height="200" viewBox="0 0 800 200">
+            <!-- Center line -->
+            <line x1="300" y1="10" x2="300" y2="180" stroke="var(--border)" stroke-width="2"/>
+            <text x="300" y="195" class="node-text" style="font-size:11px;">SHAP Value (Baseline Verdict offset)</text>
+            
+            <!-- Features and bars -->
+            <!-- iat_cv -->
+            <text x="280" y="35" class="node-text" style="text-anchor:end; font-family:var(--font-mono)">iat_cv</text>
+            <rect x="300" y="20" width="280" height="20" fill="var(--red)" rx="2" ry="2"/>
+            <text x="590" y="34" class="node-text" style="text-anchor:start; font-weight:700; fill:var(--red)">+0.52 (Highly Periodic)</text>
+
+            <!-- periodicity_score -->
+            <text x="280" y="70" class="node-text" style="text-anchor:end; font-family:var(--font-mono)">periodicity_score</text>
+            <rect x="300" y="55" width="190" height="20" fill="var(--red)" rx="2" ry="2"/>
+            <text x="500" y="69" class="node-text" style="text-anchor:start; font-weight:700; fill:var(--red)">+0.34 (High Correlation)</text>
+
+            <!-- bytes_ratio -->
+            <text x="280" y="105" class="node-text" style="text-anchor:end; font-family:var(--font-mono)">bytes_ratio</text>
+            <rect x="210" y="90" width="90" height="20" fill="var(--blue)" rx="2" ry="2"/>
+            <text x="195" y="104" class="node-text" style="text-anchor:end; font-weight:700; fill:var(--blue)">-0.12 (High Inbound)</text>
+
+            <!-- sni_entropy -->
+            <text x="280" y="140" class="node-text" style="text-anchor:end; font-family:var(--font-mono)">sni_entropy</text>
+            <rect x="300" y="125" width="50" height="20" fill="var(--red)" rx="2" ry="2"/>
+            <text x="360" y="139" class="node-text" style="text-anchor:start; font-weight:700; fill:var(--red)">+0.08</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Behavioral Detectors -->
+    <section id="rule-detectors">
+      <h2>5. Behavioral Rule-Based Detectors</h2>
+      <p>Rule detectors analyze network flows in parallel to the machine learning models. They identify specific, known attack patterns and maintain state within Redis:</p>
+      
       <table class="doc-table">
         <thead>
           <tr>
-            <th>Architecture Phase</th>
-            <th>Model Type</th>
-            <th>Inputs & Dimensions</th>
-            <th>Primary Objective</th>
+            <th>Threat Detector</th>
+            <th>Algorithm / Mechanism</th>
+            <th>Trigger Metric</th>
+            <th>MITRE TTP</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Stage 1 (Invariant Detection)</strong></td>
-            <td>SGD Logist. Regression (Calibrated)</td>
-            <td>6 Invariant Columns: <code>duration_s</code>, <code>total_bytes</code>, <code>orig_bytes</code>, <code>orig_pkts</code>, <code>resp_bytes</code>, <code>bytes_ratio</code></td>
-            <td>Filters out obvious benign flows across the network. Captures any potential beacon or exfiltration signature broadly. High recall, low precision (7.51% precision).</td>
+            <td><strong>Vertical Port Scan</strong></td>
+            <td>Redis HyperLogLog cardinality tracking</td>
+            <td>&gt;= 15 unique destination ports in 60s from a single source IP</td>
+            <td>T1046 (Discovery)</td>
           </tr>
           <tr>
-            <td><strong>Stage 2 (Precision Recovery)</strong></td>
-            <td>Random Forest Classifier</td>
-            <td>Sequence Metrics (15 connection history): <code>iat_cv</code>, <code>periodicity_score</code>, <code>dominant_period_ms</code>, <code>trend</code>, <code>duration_cv</code>, <code>history_len</code></td>
-            <td>Triggered only when Stage 1 flags a flow and connection history contains at least 2 flows. Filters out false alarms using temporal periodicity features. Achieves **77.08% OOD C2 Precision**.</td>
+            <td><strong>Horizontal Host Scan</strong></td>
+            <td>Redis HyperLogLog cardinality tracking</td>
+            <td>&gt;= 20 unique destination IPs in 60s on the same port</td>
+            <td>T1595 (Reconnaissance)</td>
           </tr>
           <tr>
-            <td><strong>Exfiltration Subsystem</strong></td>
-            <td>Hybrid (Isolation Forest + XGBoost)</td>
-            <td>15 Features (Volume, Entropy, Domain size, DNS names) + Destination History</td>
-            <td>Detects data exfiltration by looking for sustained upload anomalies to new or unique external IPs. Tracking target host history yields **100% Exfil Precision**.</td>
+            <td><strong>Brute Force Attack</strong></td>
+            <td>Failed auth tracking via Redis counters</td>
+            <td>SSH: &gt;=10/min, RDP: &gt;=8/min, Web Forms: &gt;=20/min</td>
+            <td>T1110 (Brute Force)</td>
+          </tr>
+          <tr>
+            <td><strong>Ransomware Correlation</strong></td>
+            <td>Multi-signal co-occurrence tracking</td>
+            <td>&gt;= 2 signals (SMB burst, shadow copy kill, C2 beacon) in 5 min</td>
+            <td>T1486 (Data Encryption)</td>
           </tr>
         </tbody>
       </table>
-
-      <div class="callout tip">
-        <div class="callout-title">💡 Why Decoupled Two-Stage?</div>
-        <p>Classifiers that use specific port details or protocols easily fail when threat actors shift from standard HTTP C2 protocols to custom encrypted protocols (like IRC or P2P). Using 6 invariant features in Stage 1 ensures that the network boundary is monitored regardless of the protocol. Stage 2 then uses temporal periodicity to confirm automation patterns without referencing specific protocols.</p>
-      </div>
     </section>
 
-    <section id="rule-detectors">
-      <h2>B. Rule-Based Threat Detectors</h2>
-      <p>Alongside deep ML pipelines, rule-based modules run to identify structural attacks on the network. These modules track states efficiently using Redis:</p>
-      
-      <div class="card">
-        <div class="card-title" style="color: var(--amber);">
-          <span>🔍</span>
-          <span>Port Scan / Reconnaissance Detector (T1046, T1595)</span>
-        </div>
-        <p>Calculates horizontal and vertical port scans in a 60-second window. Memory overhead is minimized by tracking unique destinations in <strong>Redis HyperLogLog</strong> structures, which offer O(1) performance:</p>
-        <ul>
-          <li><strong>Vertical Scan</strong>: Triggered when a single source IP contacts <code>>= 15</code> unique destination ports on a single target IP.</li>
-          <li><strong>Horizontal Scan</strong>: Triggered when a single source IP contacts <code>>= 20</code> unique destination hosts on a single destination port.</li>
-          <li><strong>Stealth Flag</strong>: Appended when average packet payload size drops below 80 bytes (indicating empty TCP SYN scans).</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--purple);">
-          <span>↔️</span>
-          <span>Lateral Movement Detector (T1021, T1570)</span>
-        </div>
-        <p>Monitors internal, East-West network flow distributions. If a host contacts multiple distinct internal IPs over administrator administration ports within 5 minutes, an alert is raised:</p>
-        <ul>
-          <li><strong>SMB Spread (Port 445)</strong>: Triggered if a host contacts <code>> 4</code> unique internal hosts (often indicates ransomware propagation).</li>
-          <li><strong>RDP Spread (Port 3389)</strong>: Triggered if a host contacts <code>> 3</code> unique internal targets.</li>
-          <li><strong>RPC/WMI Spread (Port 135)</strong>: Triggered if a host contacts <code>> 4</code> unique internal hosts.</li>
-          <li><strong>WinRM Spread (Port 5985)</strong>: Triggered if a host contacts <code>> 3</code> unique internal hosts.</li>
-          <li><strong>SSH Spread (Port 22)</strong>: Triggered if a host contacts <code>> 5</code> unique internal hosts.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--red);">
-          <span>🔨</span>
-          <span>Brute Force credential Attack Detector (T1110)</span>
-        </div>
-        <p>Tracks failed authorization frequencies on authentication ports using Redis counters. It separates targeted brute-forcing from password spraying:</p>
-        <ul>
-          <li><strong>SSH/RDP Brute Force</strong>: Triggered if a source IP makes <code>>= 10</code> SSH attempts/min, or <code>>= 8</code> RDP attempts/min to a single destination.</li>
-          <li><strong>Password Spray</strong>: Triggered if a source IP attempts auth connections to <code>>= 4</code> unique destination hosts at <code>>= 3</code> attempts/min on the same port.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="color: var(--red);">
-          <span>☠️</span>
-          <span>Ransomware Behaviour Detector (T1486, T1490)</span>
-        </div>
-        <p>Correlates multiple signals within a 5-minute window to identify active ransomware. To minimize false alarms, the detector requires **at least 2 matching signals** to trigger:</p>
-        <ol>
-          <li><code>smb_write_burst</code>: Large, high-frequency data write operations over Port 445 (SMB) exceeding 500KB.</li>
-          <li><code>shadow_copy_kill_pattern</code>: Internal host scanning/admin connections combined with RPC calls.</li>
-          <li><code>pre_encrypt_c2</code>: Active outbound C2 beacons detected on the same source IP.</li>
-          <li><code>smb_enumeration</code>: High-frequency, low-byte connections on Port 445, indicating directory mapping.</li>
-        </ol>
-      </div>
-    </section>
-
+    <!-- Active Learning -->
     <section id="active-learning">
-      <h2>C. Analyst Feedback & Active Learning Loop</h2>
-      <p>PhantomFlow adapts to its deployment network using supervised online learning. When a security analyst reviews an alert and flags it as a <strong>True Positive (TP)</strong> or <strong>False Positive (FP)</strong>, the backend triggers the feedback loop (<code>pipeline/feedback_trainer.py</code>):</p>
+      <h2>6. Analyst Feedback & Active Learning</h2>
+      <p>PhantomFlow adapts to its deployment network using supervised online learning. When a security analyst reviews an alert and flags it as a <strong>True Positive (TP)</strong> or <strong>False Positive (FP)</strong>, the feedback trainer (<code>pipeline/feedback_trainer.py</code>) retrains the underlying meta-estimator model weights incrementally:</p>
       
-      <pre><span class="pre-lang">python</span><code># Ingestion active learning step inside feedback_trainer.py
-def update(self, features: dict, label: int) -> bool:
-    # label = 1 (TP, threat), label = 0 (FP, benign)
-    if self._model is None or not hasattr(self._model, 'partial_fit'):
-        return False
-        
-    with feedback_lock:
-        X = self._features_to_vector(features)
-        
-        # Standardize features using the base pipeline scaler
-        if self._imputer:
-            X = self._imputer.transform(X)
-        if self._scaler:
-            X = self._scaler.transform(X)
-            
-        # Incremental update to the SGD model's linear weights
-        self._model.partial_fit(X, [label], classes=[0, 1])
-        
-        # Persist feedback weights to disk
-        joblib.dump({"model": self._model, "scaler": self._scaler}, "models/invariant_feedback.pkl")
-        return True</code></pre>
-      <p>This allows the model to learn and adapt to local network behaviors (like regular offsite backups or database synching) without requiring full pipeline retraining.</p>
+      <pre><span class="pre-lang">python</span><code># Incremental meta-model training inside feedback_trainer.py
+with feedback_lock:
+    X_raw = self._features_to_vector(features)
+    X_scaled = self._scaler.transform(self._imputer.transform(X_raw))
+    
+    # partial_fit retrains the calibrated model weights dynamically
+    # label: 1 = True Positive (Confirm Threat), 0 = False Positive (Dismiss Event)
+    self._model.partial_fit(X_scaled, [label], classes=[0, 1])
+    
+    # Save the updated model checkpoint to disk
+    joblib.dump({"model": self._model, ...}, "models/invariant_feedback.pkl")</code></pre>
     </section>
 
-    <!-- 4. Active Mitigation -->
+    <!-- Active Mitigation -->
     <section id="mitigation-actions">
-      <h2>4. Human-in-the-Loop Active Response</h2>
-      <p>PhantomFlow provides active response capabilities to contain threats. To prevent accidental lockouts of critical internal infrastructure, the system enforces a strict <strong>Human-in-the-Loop (HITL) approval policy</strong>:</p>
+      <h2>7. Human-in-the-Loop Active Response</h2>
+      <p>The active response suite supports IP blocking, DNS sinkholing, and EDR agent isolation. To prevent accidental outages of critical services, the platform enforces strict approval policies:</p>
 
       <table class="doc-table">
         <thead>
           <tr>
-            <th>Mitigation Type</th>
-            <th>API Command</th>
+            <th>Mitigation Action</th>
+            <th>API Endpoint Target</th>
             <th>Database Schema Mapping</th>
             <th>Automation Policy</th>
           </tr>
@@ -1229,31 +1397,27 @@ def update(self, features: dict, label: int) -> bool:
         <tbody>
           <tr>
             <td><strong>Firewall IP Block</strong></td>
-            <td><code>block_ip</code></td>
-            <td>Pushed to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
-            <td>Auto-executes only if model confidence <code>>= 90%</code>. Otherwise, queues in the dashboard for manual approval.</td>
+            <td>Edge Firewall API call</td>
+            <td>Written to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
+            <td>Auto-executes only if model confidence <code>>= 90%</code>. Otherwise, queues in the dashboard.</td>
           </tr>
           <tr>
             <td><strong>DNS Domain Sinkhole</strong></td>
-            <td><code>sinkhole_domain</code></td>
-            <td>Pushed to the <code>target_domain</code> column (Postgres <code>TEXT</code> type).</td>
+            <td>DNS Sinkhole API call</td>
+            <td>Written to the <code>target_domain</code> column (Postgres <code>TEXT</code> type).</td>
             <td>Auto-executes only if model confidence <code>>= 95%</code>. Otherwise, queues in the dashboard.</td>
           </tr>
           <tr>
             <td><strong>EDR Host Isolation</strong></td>
-            <td><code>isolate_host</code></td>
-            <td>Pushed to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
-            <td><strong>Never Auto-Executes</strong>. Always requires manual analyst approval and notes in the dashboard.</td>
+            <td>EDR Host Isolation API call</td>
+            <td>Written to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
+            <td><strong>Always requires manual approval</strong>. Never auto-executes, regardless of confidence.</td>
           </tr>
         </tbody>
       </table>
-
-      <div class="callout warning">
-        <div class="callout-title">⚠️ Database Type Constraint Safety</div>
-        <p>In early versions, saving a domain name into the <code>target_ip</code> column caused Postgres to throw <code>invalid input syntax for type inet</code> errors. The API was updated to separate target destinations into <code>target_ip</code> (which validates CIDR formats) and <code>target_domain</code> (which accepts domain strings).</p>
-      </div>
     </section>
 
+    <!-- Suppression Rules -->
     <section id="suppression-engine">
       <h2>Suppression Rules Engine</h2>
       <p>Suppression rules allow analysts to filter out known, benign activities (like administrative network scans or scheduled transfers). If a network flow matches an active suppression rule, the alert is silenced: it is stored in the database but will not trigger visual banners or populate metric counters.</p>
@@ -1261,9 +1425,9 @@ def update(self, features: dict, label: int) -> bool:
       <p>When a new suppression rule is created, the system also runs a **retroactive suppression check** in <code>api/routes/suppression.py</code>. This updates matching, unreviewed alerts in the database to a status of <code>'suppressed'</code>. This ensures that the dashboard instantly cleans up related alerts without requiring a page reload.</p>
     </section>
 
-    <!-- 5. SOC Dashboard Map -->
+    <!-- SOC Dashboard Details -->
     <section id="dashboard-details">
-      <h2>5. SOC Dashboard Interface Map</h2>
+      <h2>8. SOC Dashboard Interface Map</h2>
       <p>The dashboard layout maps components into five distinct grids to make threat review intuitive:</p>
 
       <div class="ui-grid-map">
@@ -1310,21 +1474,21 @@ def update(self, features: dict, label: int) -> bool:
       
       <div class="stepper">
         <div class="step-item">
-          <div class="step-number">A</div>
+          <div class="step-number">1</div>
           <div class="step-content">
             <h4>Select Alert & Review Summary</h4>
             <p>Click the new alert in the chronological feed. Review the severity rating and read the summary in the Explanation box to understand the threat type.</p>
           </div>
         </div>
         <div class="step-item">
-          <div class="step-number">B</div>
+          <div class="step-number">2</div>
           <div class="step-content">
             <h4>Analyze SHAP Feature Contributions</h4>
             <p>Inspect the SHAP horizontal bar graph in the detail inspector. Check which features (e.g., <code>iat_cv</code>, <code>bytes_ratio</code>, <code>periodicity_score</code>) contributed most to the model's decision.</p>
           </div>
         </div>
         <div class="step-item">
-          <div class="step-number">C</div>
+          <div class="step-number">3</div>
           <div class="step-content">
             <h4>Identify Verdict & Retrain</h4>
             <p>Determine whether the alert is malicious (True Positive) or benign (False Positive):</p>
@@ -1337,9 +1501,9 @@ def update(self, features: dict, label: int) -> bool:
       </div>
     </section>
 
-    <!-- 6. Operations & Data -->
+    <!-- Database Schema -->
     <section id="database-schema">
-      <h2>6. Operations & Database</h2>
+      <h2>9. Operations & Database</h2>
       <h3>A. PostgreSQL Database Schema</h3>
       <p>The platform database schema (PostgreSQL 15) handles persistent storage for flows, alerts, response audits, and suppression rules:</p>
       
@@ -1465,7 +1629,7 @@ echo PhantomFlow services successfully initialized and running.</code></pre>
 
     <!-- Simulation Workspace widget -->
     <section id="sandbox-widget">
-      <h2>7. Interactive Operations Sandbox</h2>
+      <h2>10. Interactive Operations Sandbox</h2>
       <p>Test the dashboard workflows using this interactive simulator. Spawn custom alerts, triage them as True/False Positives, review the metrics updates, and track mitigation events in the Response tab:</p>
       
       <div class="sim-container">
