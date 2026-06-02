@@ -30,6 +30,10 @@ echo [System] Starting infrastructure containers (Postgres, Redis, Kafka)...
 docker compose -f docker/docker-compose.yml up -d
 
 echo.
+echo [System] Initializing database schema...
+python scratch/init_db.py
+
+echo.
 echo [System] Resetting databases to clean slate (zero-mock counters)...
 python ..\clear_db.py
 

@@ -486,19 +486,37 @@ async def _process_flow(
     for alert_dict in all_alerts:
         # Suppression check
         suppressed = suppression.should_suppress(alert_dict, alert_dict["threat_type"])
+        is_suppressed = False
         if suppressed:
             log.info("Alert suppressed by rule",
                      rule_id=suppressed["rule_id"], flow_id=flow_id)
-            continue
+            alert_dict["analyst_status"] = "suppressed"
+            alert_dict["analyst_notes"] = f"Auto-suppressed by rule: {suppressed['name']}"
+            is_suppressed = True
 
-        # Threat Intel enrichment
-        ti_context = await check_threat_intel(dst_ip)
-        alert_dict["explanation"] = str(alert_dict.get("explanation", "")) + f" | TI: {ti_context}"
+        # Threat Intel enrichment (skip if suppressed)
+        if not is_suppressed:
+            ti_context = await check_threat_intel(dst_ip)
+            alert_dict["explanation"] = str(alert_dict.get("explanation", "")) + f" | TI: {ti_context}"
 
         # Persist to DB
         try:
             await db.save_flow(flow_data, flow_features)
             alert_id = await db.save_alert(alert_dict)
+            
+            if is_suppressed:
+                if db.pool:
+                    async with db.pool.acquire() as conn:
+                        await conn.execute("""
+                            UPDATE alerts 
+                            SET analyst_status = 'suppressed', 
+                                analyst_notes = $1, 
+                                reviewed_at = NOW() 
+                            WHERE alert_id = $2::uuid
+                        """, alert_dict["analyst_notes"], alert_id)
+                log.info("Suppressed alert persisted to database", alert_id=alert_id)
+                continue
+                
             log.alert(alert_dict)
             
             # Publish to Redis Pub/Sub for WebSockets
@@ -518,10 +536,12 @@ async def _process_flow(
                         "sni": alert_dict.get("sni", ""),
                         "explanation": alert_dict.get("explanation", ""),
                         "shap_values": alert_dict.get("shap_values") or {},
+                        "mitre_ttps": alert_dict.get("mitre_ttps") or [],
+                        "analyst_status": "unreviewed",
                     }
                     _redis.publish("alerts:feed", json.dumps(ws_alert))
-                except Exception as ex:
-                    log.error("Failed to publish alert to Redis Pub/Sub", exc=ex)
+                except Exception as e:
+                    log.error("Redis pubsub broadcast failed", exc=e)
         except Exception as e:
             log.error("Failed to save flow/alert to DB", exc=e)
             continue

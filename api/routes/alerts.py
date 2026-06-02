@@ -166,3 +166,27 @@ async def get_alert(request: Request, alert_id: str):
         analyst_status=alert_dict.get("analyst_status", "unreviewed"),
     )
 
+
+@router.post("/reset")
+async def reset_database(request: Request):
+    """Clear database and flush Redis cache (Clean Slate)."""
+    db = get_db(request)
+    redis_client = getattr(request.app.state, "redis", None)
+    
+    # 1. Truncate PostgreSQL tables
+    if db and db.pool:
+        try:
+            async with db.pool.acquire() as conn:
+                await conn.execute("TRUNCATE TABLE response_audit, analyst_reviews, alerts, flows CASCADE;")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Database truncation failed: {e}")
+            
+    # 2. Flush Redis
+    if redis_client:
+        try:
+            redis_client.flushall()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Redis flushall failed: {e}")
+            
+    return {"status": "success", "message": "Database and Redis reset successfully."}
+

@@ -78,9 +78,23 @@ class BruteForceDetector:
     def check(self, flow: dict) -> Optional[BruteResult]:
         src_ip = flow.get("src_ip", flow.get("src", ""))
         dst_ip = flow.get("dst_ip", flow.get("dst", ""))
-        dst_port = int(flow.get("dst_port", flow.get("dport", 0)))
-        orig_bytes = int(flow.get("orig_bytes", 0))
-        duration_s = float(flow.get("duration_s", 1.0))
+        dst_port_val = flow.get("dst_port")
+        if dst_port_val is None:
+            dst_port_val = flow.get("dport")
+        try:
+            dst_port = int(dst_port_val) if dst_port_val is not None else 0
+        except (ValueError, TypeError):
+            dst_port = 0
+            
+        try:
+            orig_bytes = int(flow.get("orig_bytes") or 0)
+        except (ValueError, TypeError):
+            orig_bytes = 0
+            
+        try:
+            duration_s = float(flow.get("duration_s") or 1.0)
+        except (ValueError, TypeError):
+            duration_s = 1.0
 
         if not src_ip or not dst_ip:
             return None

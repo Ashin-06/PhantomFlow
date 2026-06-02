@@ -693,6 +693,8 @@ tr:hover td{background:var(--bg2)}
     </div>
   </div>
   <div class="header-right">
+    <a href="/dashboard/guide.html" target="_blank" class="triage-btn tp" style="padding:4px 8px;font-size:9px;background:rgba(0,212,170,0.15);color:var(--teal);border:1px solid rgba(0,212,170,0.3);font-family:var(--font-mono);text-decoration:none;display:inline-block;cursor:pointer;margin-right:4px;">📖 User Guide</a>
+    <button class="triage-btn fp" style="padding:4px 8px;font-size:9px;background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);font-family:var(--font-mono);cursor:pointer;" onclick="resetSuite()">⚠️ Reset Suite</button>
     <div class="header-model-badge">● MODEL ONLINE</div>
     <div class="live-badge">● LIVE</div>
     <div class="flow-rate"><div class="rate-dot"></div><span id="flow-rate-val">0 flows/sec</span></div>
@@ -1657,13 +1659,27 @@ async function triageAlert(alertId, verdict) {
     if(res.ok) {
       const data = await res.json();
       showToast(`✓ Marked ${verdict.replace('_',' ')}${data.model_retrained?' · Model updated':''}`, 'success');
+      
+      // Locally remove from live alerts to make it instantaneous
+      liveAlerts = liveAlerts.filter(a => a.alert_id !== alertId);
+      renderAlertList();
+      
+      // Also update huntAlerts locally if present
+      if (typeof huntAlerts !== 'undefined' && Array.isArray(huntAlerts)) {
+        const huntAlert = huntAlerts.find(a => a.alert_id === alertId);
+        if (huntAlert) {
+          huntAlert.analyst_status = verdict === 'true_positive' ? 'confirmed_tp' : 'false_positive';
+          huntRenderTable(huntAlerts);
+        }
+      }
+      
       refreshSOC();
     } else showToast('Triage failed: ' + res.status, 'error');
   } catch(e) { showToast('Triage error: ' + e.message, 'error'); }
 }
 
 async function respondAlert(alertId, action) {
-  const alert = liveAlerts.find(a => a.alert_id === alertId);
+  const alert = liveAlerts.find(a => a.alert_id === alertId) || (typeof huntAlerts !== 'undefined' && Array.isArray(huntAlerts) ? huntAlerts.find(a => a.alert_id === alertId) : null);
   const target = alert?.dst || '0.0.0.0';
   try {
     const res = await fetch(`/api/response/${alertId}`, {
@@ -1673,8 +1689,54 @@ async function respondAlert(alertId, action) {
     if(res.ok) {
       const data = await res.json();
       showToast(`🔒 ${action} queued for ${target}`, 'success');
+      
+      // Locally remove from live alerts to make it instantaneous
+      liveAlerts = liveAlerts.filter(a => a.alert_id !== alertId);
+      renderAlertList();
+      
+      // Also update huntAlerts locally if present
+      if (typeof huntAlerts !== 'undefined' && Array.isArray(huntAlerts)) {
+        const huntAlert = huntAlerts.find(a => a.alert_id === alertId);
+        if (huntAlert) {
+          huntAlert.analyst_status = 'confirmed_tp';
+          huntRenderTable(huntAlerts);
+        }
+      }
+      
+      refreshSOC();
+      loadResponseQueue();
     } else showToast('Response failed: ' + res.status, 'error');
   } catch(e) { showToast('Response error: ' + e.message, 'error'); }
+}
+
+async function resetSuite() {
+  if (!confirm('⚠️ WARNING: Are you sure you want to reset the suite?\nThis will permanently delete all alerts, flows, and response audits from PostgreSQL, and flush all cached Redis statistics.')) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/alerts/reset', { method: 'POST' });
+    if (res.ok) {
+      showToast('✓ Suite database and cache reset successfully!', 'success');
+      liveAlerts = [];
+      if (typeof huntAlerts !== 'undefined') huntAlerts = [];
+      
+      // Clear alert list in UI
+      renderAlertList();
+      
+      // Refresh Stats & Timeline
+      await refreshSOC();
+      
+      // Reload Response Queue
+      if (typeof loadResponseQueue === 'function') loadResponseQueue();
+      
+      // Reload Suppression Rules
+      if (typeof loadSuppressionRules === 'function') loadSuppressionRules();
+    } else {
+      showToast('Reset failed: ' + res.status, 'error');
+    }
+  } catch (e) {
+    showToast('Reset error: ' + e.message, 'error');
+  }
 }
 
 // ─── MITRE ────────────────────────────────────────────────────────────────────
@@ -1784,8 +1846,11 @@ function huntRenderTable(alerts) {
       <td style="color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.sni||'—'}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:2px">${ttpsHTML || '—'}</div></td>
       <td>
-        <button class="triage-btn tp" onclick="triageAlert('${a.alert_id}','true_positive')">TP</button>
-        <button class="triage-btn fp" onclick="triageAlert('${a.alert_id}','false_positive')">FP</button>
+        ${a.analyst_status === 'confirmed_tp' ? '<span class="badge badge-green" style="padding:4px 8px;">✓ TP</span>' : 
+          a.analyst_status === 'false_positive' ? '<span class="badge badge-red" style="padding:4px 8px;">✗ FP</span>' : 
+          a.analyst_status === 'suppressed' ? '<span class="badge badge-gray" style="padding:4px 8px;">🛡️ Suppressed</span>' : 
+          `<button class="triage-btn tp" onclick="triageAlert('${a.alert_id}','true_positive')">TP</button>
+           <button class="triage-btn fp" onclick="triageAlert('${a.alert_id}','false_positive')">FP</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -2988,6 +3053,7 @@ async function createSuppressionRule(e) {
       showToast('✓ Suppression rule created successfully', 'success');
       document.getElementById('suppression-form').reset();
       loadSuppressionRules();
+      refreshSOC();
     } else {
       const errData = await res.json();
       showToast('Failed to create rule: ' + (errData.detail || res.statusText), 'error');
@@ -3393,7 +3459,7 @@ function clearMapSelection() {
 }
 
 async function isolateHostFromMap(ip) {
-  const alert = liveAlerts.find(a => a.src === ip || a.dst === ip);
+  const alert = liveAlerts.find(a => a.src === ip || a.dst === ip) || (typeof huntAlerts !== 'undefined' && Array.isArray(huntAlerts) ? huntAlerts.find(a => a.src === ip || a.dst === ip) : null);
   if (!alert) {
     showToast(`No active alert involving host ${ip} found.`, 'error');
     return;
@@ -3407,6 +3473,21 @@ async function isolateHostFromMap(ip) {
     });
     if (res.ok) {
       showToast(`🔒 Isolation queued for host ${ip}`, 'success');
+      
+      // Locally remove from live alerts to make it instantaneous
+      liveAlerts = liveAlerts.filter(a => a.alert_id !== alert.alert_id);
+      renderAlertList();
+      
+      // Also update huntAlerts locally if present
+      if (typeof huntAlerts !== 'undefined' && Array.isArray(huntAlerts)) {
+        const huntAlert = huntAlerts.find(a => a.alert_id === alert.alert_id);
+        if (huntAlert) {
+          huntAlert.analyst_status = 'confirmed_tp';
+          huntRenderTable(huntAlerts);
+        }
+      }
+      
+      refreshSOC();
       loadResponseQueue();
     } else {
       showToast(`Failed to isolate host: ${res.status}`, 'error');

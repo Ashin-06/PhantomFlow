@@ -47,14 +47,26 @@ class SuppressionEngine:
                 continue
 
             # IP CIDR matches
-            src_ip = ipaddress.ip_address(flow["src"])
+            try:
+                src_ip = ipaddress.ip_address(flow.get("src") or "0.0.0.0")
+            except ValueError:
+                src_ip = None
+
             if rule.get("src_ip_cidr"):
+                if src_ip is None:
+                    continue
                 subnet = ipaddress.ip_network(rule["src_ip_cidr"])
                 if src_ip not in subnet:
                     continue
                     
-            dst_ip = ipaddress.ip_address(flow["dst"])
+            try:
+                dst_ip = ipaddress.ip_address(flow.get("dst") or "0.0.0.0")
+            except ValueError:
+                dst_ip = None
+
             if rule.get("dst_ip_cidr"):
+                if dst_ip is None:
+                    continue
                 subnet = ipaddress.ip_network(rule["dst_ip_cidr"])
                 if dst_ip not in subnet:
                     continue

@@ -46,7 +46,7 @@ async def queue_response(alert_id: str, body: RespondRequest, request: Request):
     can_auto = alert["confidence"] >= 0.90 and body.auto_execute
 
     target = body.target or str(alert["dst_ip"] or "")
-    status = "executing" if can_auto else "pending"
+    status = "executed" if can_auto else "pending"
 
     import ipaddress
     target_ip = None
@@ -71,8 +71,14 @@ async def queue_response(alert_id: str, body: RespondRequest, request: Request):
                 alert_id, body.action, target_ip, target_domain, status,
                 "SYSTEM_AUTO" if can_auto else None
             )
+            # Also update alert status to confirmed_tp since response action is taken
+            await conn.execute("""
+                UPDATE alerts
+                SET analyst_status = 'confirmed_tp', reviewed_at = NOW()
+                WHERE alert_id = $1::uuid
+            """, alert_id)
     except Exception as e:
-        log.error(f"[Response] DB insert failed: {e}")
+        log.error(f"[Response] DB insert/update failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
     if can_auto:

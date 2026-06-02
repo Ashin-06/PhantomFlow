@@ -85,10 +85,28 @@ class RansomwareDetector:
               c2_detected: bool = False) -> Optional[RansomwareResult]:
         src_ip = flow.get("src_ip", flow.get("src", ""))
         dst_ip = flow.get("dst_ip", flow.get("dst", ""))
-        dst_port = int(flow.get("dst_port", flow.get("dport", 0)))
-        orig_bytes = int(flow.get("orig_bytes", 0))
-        orig_pkts = int(flow.get("orig_pkts", 1))
-        duration_s = float(flow.get("duration_s", 0.1))
+        dst_port_val = flow.get("dst_port")
+        if dst_port_val is None:
+            dst_port_val = flow.get("dport")
+        try:
+            dst_port = int(dst_port_val) if dst_port_val is not None else 0
+        except (ValueError, TypeError):
+            dst_port = 0
+            
+        try:
+            orig_bytes = int(flow.get("orig_bytes") or 0)
+        except (ValueError, TypeError):
+            orig_bytes = 0
+            
+        try:
+            orig_pkts = int(flow.get("orig_pkts") or 1)
+        except (ValueError, TypeError):
+            orig_pkts = 1
+            
+        try:
+            duration_s = float(flow.get("duration_s") or 0.1)
+        except (ValueError, TypeError):
+            duration_s = 0.1
         pkts_per_sec = orig_pkts / max(duration_s, 0.001)
 
         if not src_ip:

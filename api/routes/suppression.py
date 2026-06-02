@@ -114,6 +114,28 @@ async def create_suppression_rule(body: SuppressionRuleCreate, request: Request,
             body.justification,
             body.ticket_reference
         )
+        
+        # Retroactively suppress any matching unreviewed alerts
+        await conn.execute("""
+            UPDATE alerts a
+            SET analyst_status = 'suppressed', reviewed_at = NOW(),
+                analyst_notes = $1
+            FROM flows f
+            WHERE a.flow_id = f.flow_id
+              AND a.analyst_status = 'unreviewed'
+              AND ($2::cidr IS NULL OR f.src_ip <<= $2::cidr)
+              AND ($3::cidr IS NULL OR f.dst_ip <<= $3::cidr)
+              AND ($4::integer IS NULL OR f.dst_port = $4::integer)
+              AND ($5::text IS NULL OR f.sni ~ $5::text)
+              AND ($6::text IS NULL OR a.threat_type = $6::text)
+        """,
+            f"Auto-suppressed by rule: {body.name}",
+            src_cidr,
+            dst_cidr,
+            body.dst_port,
+            body.sni_pattern,
+            body.threat_type
+        )
     
     # Broadcast to Redis to reload rules in running orchestrators
     if redis_client:

@@ -5,13 +5,16 @@ Allows Tier 1/2 analysts to label alerts, trigger suppression rules,
 and escalate to Tier 3.
 """
 
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from api.auth import require_role
 from pipeline.db_layer import Database
 
 router = APIRouter(prefix="/analyst", tags=["Analyst Workflow"])
+
+def get_db(request: Request):
+    return request.app.state.db
 
 class AnalystReview(BaseModel):
     alert_id: str
@@ -35,7 +38,7 @@ async def submit_review(
     review: AnalystReview,
     background_tasks: BackgroundTasks,
     token: dict = Depends(require_role("analyst")),
-    db: Database = Depends()
+    db: Database = Depends(get_db)
 ):
     """
     Submits an analyst review.
@@ -72,7 +75,7 @@ async def submit_review(
 async def create_suppression_rule(
     rule: SuppressionRuleReq,
     token: dict = Depends(require_role("tier3")),  # Only Tier3 can create global suppression
-    db: Database = Depends()
+    db: Database = Depends(get_db)
 ):
     """
     Creates a new suppression rule to prevent alert fatigue.
@@ -95,7 +98,7 @@ async def create_suppression_rule(
 
 
 @router.get("/metrics/false_positives")
-async def get_fp_metrics(token: dict = Depends(require_role("admin")), db: Database = Depends()):
+async def get_fp_metrics(token: dict = Depends(require_role("admin")), db: Database = Depends(get_db)):
     """Admin endpoint to see FP rates by threat type."""
     async with db.transaction() as conn:
         rows = await conn.fetch("""

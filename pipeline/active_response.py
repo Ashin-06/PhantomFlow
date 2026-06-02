@@ -41,12 +41,22 @@ class ActiveResponseEngine:
         # All blocks expire after 24 hours automatically (failsafe)
         expires_at = datetime.utcnow() + timedelta(hours=24)
 
+        import ipaddress
+        target_ip = None
+        target_domain = None
+        if target:
+            try:
+                ipaddress.ip_address(target)
+                target_ip = target
+            except ValueError:
+                target_domain = target
+
         async with self.db.transaction() as conn:
             await conn.execute("""
                 INSERT INTO response_audit 
-                (alert_id, action, target_ip, status, approved_by, approved_at, expires_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-            """, alert_id, action, target, status, approved_by, approved_at, expires_at)
+                (alert_id, action, target_ip, target_domain, status, approved_by, approved_at, expires_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            """, alert_id, action, target_ip, target_domain, status, approved_by, approved_at, expires_at)
 
         if is_auto:
             await self.execute_action(alert_id)
@@ -65,9 +75,11 @@ class ActiveResponseEngine:
             error = None
             try:
                 if audit["action"] == ResponseAction.BLOCK_IP:
-                    success = await self._palo_alto_block(audit["target_ip"])
+                    success = await self._palo_alto_block(str(audit["target_ip"]) if audit["target_ip"] else "")
                 elif audit["action"] == ResponseAction.SINKHOLE_DOMAIN:
-                    success = await self._cloudflare_dns_block(audit["target_domain"])
+                    success = await self._cloudflare_dns_block(audit["target_domain"] or "")
+                elif audit["action"] == ResponseAction.ISOLATE_HOST:
+                    success = await self._crowdstrike_isolate(str(audit["target_ip"]) if audit["target_ip"] else "")
             except Exception as e:
                 error = str(e)
                 log.error(f"Action execution failed: {e}")
@@ -80,6 +92,11 @@ class ActiveResponseEngine:
             """, new_status, error, audit["audit_id"])
             
             return success
+
+    async def _crowdstrike_isolate(self, ip: str) -> bool:
+        """Example integration with CrowdStrike Falcon EDR."""
+        log.warning(f"[MOCK EDR] Isolating host IP {ip}")
+        return True
 
     async def _palo_alto_block(self, ip: str) -> bool:
         """Example integration with Palo Alto Panorama."""
