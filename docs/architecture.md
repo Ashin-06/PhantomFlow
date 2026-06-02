@@ -28,3 +28,4 @@ Notes on system design and pipeline data flows.
 - Formatted tables matching feature descriptions and model names.
 - Default exfiltration alerts trigger at 50 KB outbound payload size on custom ports.
 - Added details on DER parsing and validity span checking algorithms.
+- Added details on DER parsing and validity span checking algorithms.
