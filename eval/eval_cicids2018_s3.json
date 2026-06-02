@@ -1,0 +1,17 @@
+{
+  "dataset": "cicids2018_s3",
+  "n_samples": 109051,
+  "xgb_auc": {
+    "auc_benign": NaN
+  },
+  "stage_2": {
+    "sgd_macro_f1": 0.04383036752587238,
+    "xgb_macro_f1": 1.0
+  },
+  "stage_3": {
+    "sgd_macro_f1": 0.04409354671482801,
+    "xgb_macro_f1": 1.0,
+    "sgd_degradation_pct": -0.6004494094095368,
+    "xgb_degradation_pct": 0.0
+  }
+}

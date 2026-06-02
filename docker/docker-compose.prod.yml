@@ -1,0 +1,159 @@
+# docker/docker-compose.prod.yml
+# This is what production looks like — not the dev single-node setup
+
+version: "3.9"
+
+services:
+
+  # ===== KAFKA CLUSTER (3 brokers = minimum for fault tolerance) =====
+  kafka-1:
+    image: confluentinc/cp-kafka:7.5.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zoo-1:2181,zoo-2:2181,zoo-3:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2      # Write must go to 2/3 brokers
+      KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"  # Never lose data
+      KAFKA_LOG_RETENTION_HOURS: 168    # 7-day retention
+      KAFKA_LOG_RETENTION_BYTES: 107374182400  # 100GB max
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    deploy:
+      placement:
+        constraints: [node.hostname == kafka-host-1]  # Different physical hosts
+
+  kafka-2:
+    image: confluentinc/cp-kafka:7.5.0
+    environment:
+      KAFKA_BROKER_ID: 2
+      # ... same config, different broker ID
+    deploy:
+      placement:
+        constraints: [node.hostname == kafka-host-2]
+
+  kafka-3:
+    image: confluentinc/cp-kafka:7.5.0
+    environment:
+      KAFKA_BROKER_ID: 3
+    deploy:
+      placement:
+        constraints: [node.hostname == kafka-host-3]
+
+  # ===== REDIS SENTINEL (3 nodes = automatic failover) =====
+  redis-master:
+    image: redis:7.2
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 8gb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_master_data:/data
+
+  redis-replica-1:
+    image: redis:7.2
+    command: >
+      redis-server
+      --replicaof redis-master 6379
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+    depends_on: [redis-master]
+
+  redis-sentinel-1:
+    image: redis:7.2
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./config/sentinel.conf:/etc/redis/sentinel.conf
+
+  # ===== POSTGRESQL (Primary + Read Replica) =====
+  postgres-primary:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: phantomflow
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--data-checksums"  # Detect corruption
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c max_replication_slots=3
+      -c hot_standby=on
+      -c shared_preload_libraries=pg_stat_statements
+      -c log_statement=mod                  # Audit log all writes
+      -c log_connections=on
+      -c ssl=on
+    volumes:
+      - pg_primary_data:/var/lib/postgresql/data
+      - ./certs/server.crt:/var/lib/postgresql/server.crt
+      - ./certs/server.key:/var/lib/postgresql/server.key
+
+  postgres-replica:
+    image: postgres:16
+    environment:
+      PGUSER: replicator
+      PGPASSWORD: ${PG_REPLICATION_PASSWORD}
+    command: >
+      bash -c "
+        pg_basebackup -h postgres-primary -D /var/lib/postgresql/data
+                      -U replicator -Fp -Xs -R -P
+        postgres -c hot_standby=on
+      "
+    depends_on: [postgres-primary]
+
+  # ===== PIPELINE WORKERS (scaled horizontally) =====
+  pipeline-worker:
+    image: phantomflow/pipeline:${VERSION}
+    deploy:
+      replicas: 4          # 4 workers share Kafka partitions
+      update_config:
+        parallelism: 1     # Rolling deploy — one at a time
+        delay: 30s         # Wait 30s between each
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 15s
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+    environment:
+      KAFKA_BROKERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      REDIS_SENTINEL_HOSTS: sentinel-1:26379,sentinel-2:26379,sentinel-3:26379
+      PG_HOST: postgres-primary
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===== API (with rate limiting + TLS termination) =====
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./certs/:/etc/nginx/certs/
+    depends_on: [api]
+
+  api:
+    image: phantomflow/api:${VERSION}
+    deploy:
+      replicas: 2
+    environment:
+      DATABASE_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres-primary/phantomflow
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-master:6379
+      JWT_SECRET: ${JWT_SECRET}       # From secrets manager, not env var in prod
+      JWT_ALGORITHM: RS256            # Asymmetric in prod, not HS256
+
+volumes:
+  kafka1_data:
+  redis_master_data:
+  pg_primary_data:

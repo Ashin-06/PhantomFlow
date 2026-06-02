@@ -1,0 +1,38 @@
+{
+  "ctu13_scenario8_z-3.0": {
+    "precision": 0.0008149682501952528,
+    "recall": 1.0,
+    "f1": 0.00162860923557154,
+    "dataset": "Murlo IRC   (OOD)"
+  },
+  "ctu13_scenario8_z-5.0": {
+    "precision": 0.0007979519233966153,
+    "recall": 1.0,
+    "f1": 0.0015946314075944322,
+    "dataset": "Murlo IRC   (OOD)"
+  },
+  "ctu13_scenario8_z-7.0": {
+    "precision": 0.0007938082952966859,
+    "recall": 1.0,
+    "f1": 0.001586357326987904,
+    "dataset": "Murlo IRC   (OOD)"
+  },
+  "unsw_nb15_train_z-3.0": {
+    "precision": 0.302843315184513,
+    "recall": 1.0,
+    "f1": 0.4648959881129272,
+    "dataset": "UNSW-NB15   (OOD)"
+  },
+  "unsw_nb15_train_z-5.0": {
+    "precision": 0.29009078616959627,
+    "recall": 1.0,
+    "f1": 0.4497215068575193,
+    "dataset": "UNSW-NB15   (OOD)"
+  },
+  "unsw_nb15_train_z-7.0": {
+    "precision": 0.278979045920642,
+    "recall": 1.0,
+    "f1": 0.43625272331154685,
+    "dataset": "UNSW-NB15   (OOD)"
+  }
+}

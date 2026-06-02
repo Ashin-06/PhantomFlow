@@ -1,0 +1,98 @@
+# monitoring/grafana/dashboards/phantomflow.json
+# Grafana dashboard provisioning — import this JSON in Grafana UI or via provisioning
+{
+  "title": "PhantomFlow Threat Detection",
+  "uid": "phantomflow-main",
+  "timezone": "browser",
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Alerts / Minute",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [{
+        "expr": "rate(phantomflow_alerts_total[1m]) * 60",
+        "legendFormat": "{{threat_type}} - {{severity}}"
+      }]
+    },
+    {
+      "id": 2,
+      "title": "ML Inference Latency (p99)",
+      "type": "stat",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{
+        "expr": "histogram_quantile(0.99, rate(phantomflow_inference_latency_seconds_bucket[5m]))",
+        "legendFormat": "p99 latency"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 0.05},
+              {"color": "red", "value": 0.1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "False Positive Rate (7d rolling)",
+      "type": "gauge",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "phantomflow_false_positive_rate * 100", "legendFormat": "FP Rate %"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 15}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Kafka Consumer Lag",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [{
+        "expr": "phantomflow_kafka_consumer_lag",
+        "legendFormat": "{{topic}} partition {{partition}}"
+      }],
+      "alert": {
+        "name": "High Kafka Lag",
+        "conditions": [{"evaluator": {"params": [10000], "type": "gt"}}],
+        "message": "Kafka lag exceeds 10K — pipeline is falling behind"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Flows Processed / sec",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [{
+        "expr": "rate(phantomflow_flows_total[1m])",
+        "legendFormat": "{{interface}} {{proto}}"
+      }]
+    },
+    {
+      "id": 6,
+      "title": "Sensor Health",
+      "type": "table",
+      "gridPos": {"x": 0, "y": 16, "w": 24, "h": 6},
+      "targets": [{
+        "expr": "phantomflow_sensor_health",
+        "legendFormat": "{{sensor_id}} ({{interface}})",
+        "instant": true
+      }]
+    }
+  ]
+}

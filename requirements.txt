@@ -1,0 +1,72 @@
+# Capture & Network
+scapy
+pyshark
+dpkt
+
+# Data
+numpy
+pandas
+scipy
+scikit-learn
+xgboost
+imbalanced-learn
+
+# Deep Learning
+torch
+torch-geometric
+torchvision
+
+# Online / Streaming ML
+river                    # True online learning (AdaptiveRandomForest, ADWIN drift)
+tqdm                     # Progress bars for streaming
+
+# ML Ops
+shap
+mlflow
+optuna
+
+# Dataset I/O
+boto3                    # AWS S3 streaming (CICIDS 2018)
+requests                 # HTTP dataset streaming
+
+# Pipeline
+kafka-python
+redis
+celery
+confluent-kafka
+aiokafka
+
+# API
+fastapi
+uvicorn[standard]
+pydantic
+websockets
+python-jose[cryptography]  # RS256 JWT (replaces PyJWT for RS256 support)
+passlib[bcrypt]
+python-multipart
+httpx                    # Async HTTP for active response integrations
+
+# Auth / Enterprise
+ldap3                    # Active Directory / LDAP integration
+
+# Database
+sqlalchemy
+psycopg2-binary
+asyncpg                  # Async PostgreSQL connection pool
+
+# Monitoring & Observability
+prometheus-client
+elasticsearch
+python-dotenv
+
+# Visualization
+matplotlib
+seaborn
+plotly
+
+# Testing
+pytest
+pytest-asyncio
+
+# Security / Crypto
+cryptography

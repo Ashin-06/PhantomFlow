@@ -1,0 +1,18 @@
+{
+  "dataset": "ctu13_scenario9",
+  "n_samples": 102934,
+  "xgb_auc": {
+    "auc_benign": 0.27259275811481704,
+    "auc_c2_beacon": 0.3173177627296486
+  },
+  "stage_2": {
+    "sgd_macro_f1": 0.23781845227482284,
+    "xgb_macro_f1": 0.4999878560013213
+  },
+  "stage_3": {
+    "sgd_macro_f1": 0.23781845227482284,
+    "xgb_macro_f1": 0.4999878560013213,
+    "sgd_degradation_pct": 0.0,
+    "xgb_degradation_pct": 0.0
+  }
+}

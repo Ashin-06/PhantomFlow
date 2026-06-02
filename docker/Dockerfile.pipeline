@@ -1,0 +1,47 @@
+# docker/Dockerfile.pipeline
+# Multi-stage build — keeps final image small (~600MB vs ~2GB single-stage)
+
+# ─── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# Install compile-time deps (needed for some ML packages)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ libssl-dev libffi-dev libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+# Install into a prefix dir so we can copy just the wheels in stage 2
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+# ─── Stage 2: Runtime ──────────────────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+# Runtime system deps only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \                   
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy application code
+COPY . .
+
+# Security: don't run as root
+RUN useradd -m -u 1001 phantomflow
+USER phantomflow
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Health check — pipeline exposes /health on port 8080
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python3 -c "import requests; r=requests.get('http://localhost:8080/health', timeout=5); exit(0 if r.ok else 1)"
+
+CMD ["python3", "-m", "pipeline.orchestrator"]
