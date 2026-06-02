@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhantomFlow — Complete Dashboard & Architecture Guide</title>
+  <title>PhantomFlow v2.2 — Technical Operations & Architecture Manual</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
@@ -48,41 +48,83 @@
       font-family: var(--font-sans);
       line-height: 1.6;
       overflow-x: hidden;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--bg3);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--border);
-    }
-
-    /* Container */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-
-    /* Header */
-    .header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 20px;
-      margin-bottom: 40px;
+      min-height: 100vh;
     }
 
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+    /* Layout Structure */
+    .sidebar {
+      width: 290px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      padding: 30px 20px;
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .main-content {
+      margin-left: 290px;
+      flex: 1;
+      padding: 45px 50px;
+      max-width: 1100px;
+    }
+
+    @media (max-width: 1024px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 20px;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 30px 20px;
+      }
+    }
+
+    /* Sidebar Search */
+    .search-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      width: 100%;
+      outline: none;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text3);
+    }
+
+    /* Brand and Sidebar Navigation */
     .brand {
       display: flex;
       align-items: center;
@@ -90,113 +132,185 @@
     }
 
     .brand-icon svg {
-      width: 32px;
-      height: 32px;
-    }
-
-    .brand-text {
-      font-family: var(--font-display);
+      width: 28px;
+      height: 28px;
     }
 
     .brand-name {
-      font-size: 24px;
+      font-family: var(--font-display);
+      font-size: 20px;
       font-weight: 700;
       color: var(--teal);
       letter-spacing: 0.05em;
     }
 
-    .brand-sub {
+    .nav-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .nav-group {
+      margin-bottom: 5px;
+    }
+
+    .nav-title {
       font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--text3);
+      margin-bottom: 8px;
       font-family: var(--font-mono);
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      display: block;
+      padding: 6px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--teal);
+      border-left-color: var(--teal);
+      padding-left: 12px;
+    }
+
+    /* Header styling */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
     }
 
     .btn-back {
       background: var(--teal2);
       color: var(--teal);
       border: 1px solid rgba(0,212,170,0.3);
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: var(--r);
       font-weight: 600;
       text-decoration: none;
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12px;
       transition: all 0.2s;
     }
 
     .btn-back:hover {
       background: var(--teal);
       color: var(--bg);
-      transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,212,170,0.3);
     }
 
-    /* Titles */
+    /* Headings and Typography */
     h1, h2, h3, h4 {
       font-family: var(--font-display);
       font-weight: 700;
-      letter-spacing: -0.01em;
+      color: var(--text);
     }
 
-    h1 { font-size: 36px; margin-bottom: 10px; color: var(--teal); }
-    h2 { font-size: 28px; margin: 40px 0 20px 0; border-left: 4px solid var(--teal); padding-left: 12px; }
-    h3 { font-size: 20px; margin: 25px 0 15px 0; color: var(--blue); }
+    h1 { font-size: 36px; margin-bottom: 8px; color: var(--teal); }
+    h2 { font-size: 24px; margin: 45px 0 20px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--teal); }
+    h3 { font-size: 18px; margin: 30px 0 15px 0; color: var(--blue); display: flex; align-items: center; gap: 8px; }
+    h4 { font-size: 14px; margin: 20px 0 10px 0; color: var(--text2); font-family: var(--font-mono); }
 
     p {
       color: var(--text2);
-      margin-bottom: 20px;
-      font-size: 15px;
+      margin-bottom: 18px;
+      font-size: 14.5px;
+      text-align: justify;
     }
 
-    /* Badges */
-    .badge {
-      display: inline-block;
-      font-size: 10px;
+    ul, ol {
+      margin-bottom: 18px;
+      margin-left: 24px;
+      color: var(--text2);
+      font-size: 14px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Info Callouts */
+    .callout {
+      background: rgba(15, 23, 42, 0.6);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--r);
+      padding: 15px 20px;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+    }
+    .callout.tip { border-left-color: var(--teal); }
+    .callout.warning { border-left-color: var(--amber); }
+    .callout.danger { border-left-color: var(--red); }
+    .callout-title {
       font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-    }
-
-    .badge-teal { background: var(--teal2); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
-    .badge-blue { background: var(--blue2); color: var(--blue); border: 1px solid rgba(0,176,255,0.2); }
-    .badge-red { background: var(--red2); color: var(--red); border: 1px solid rgba(255,71,87,0.2); }
-    .badge-amber { background: var(--amber2); color: var(--amber); border: 1px solid rgba(255,178,55,0.2); }
-    .badge-purple { background: var(--purple2); color: var(--purple); border: 1px solid rgba(176,107,255,0.2); }
-
-    /* Code blocks */
-    code, pre {
+      margin-bottom: 6px;
       font-family: var(--font-mono);
-      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .callout.tip .callout-title { color: var(--teal); }
+    .callout.warning .callout-title { color: var(--amber); }
+    .callout.danger .callout-title { color: var(--red); }
+
+    /* Tables */
+    .doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 30px 0;
+      font-size: 13.5px;
+      box-shadow: var(--shadow);
       border-radius: var(--r);
-    }
-    code {
-      padding: 2px 6px;
-      color: var(--teal);
-      font-size: 13px;
-    }
-    pre {
-      padding: 16px;
+      overflow: hidden;
       border: 1px solid var(--border);
-      overflow-x: auto;
-      margin-bottom: 25px;
+    }
+
+    .doc-table th, .doc-table td {
+      padding: 12px 16px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .doc-table th {
+      background: var(--bg2);
+      color: var(--text);
+      font-weight: 600;
+      font-family: var(--font-display);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .doc-table td {
+      background: rgba(15, 23, 42, 0.4);
+      border-bottom: 1px solid var(--border);
       color: var(--text2);
-      font-size: 13px;
     }
 
-    /* Grid Layout */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-    }
-
-    @media (max-width: 800px) {
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
+    .doc-table tr:last-child td {
+      border-bottom: none;
     }
 
     /* Cards */
@@ -204,32 +318,70 @@
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--r-lg);
-      padding: 24px;
-      margin-bottom: 30px;
+      padding: 20px;
+      margin: 20px 0;
       box-shadow: var(--shadow);
     }
-
     .card-title {
-      font-size: 18px;
-      color: var(--text);
+      font-family: var(--font-display);
       font-weight: 600;
+      font-size: 16px;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .card-title-icon {
+    /* Code blocks */
+    code, pre {
+      font-family: var(--font-mono);
+      background: var(--bg2);
+      border-radius: var(--r);
+    }
+
+    code {
+      padding: 2px 6px;
       color: var(--teal);
+      font-size: 13px;
+      background: rgba(0, 212, 170, 0.08);
+      border: 1px solid rgba(0, 212, 170, 0.15);
     }
 
-    /* Architecture Flow Graph (SVG styling) */
+    pre {
+      padding: 16px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      margin-bottom: 25px;
+      color: var(--text2);
+      font-size: 12.5px;
+      position: relative;
+    }
+
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: var(--text2);
+      font-size: 12.5px;
+    }
+
+    .pre-lang {
+      position: absolute;
+      top: 6px;
+      right: 12px;
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+
+    /* Flowchart / SVGs */
     .flowchart {
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--r-lg);
-      padding: 30px;
-      margin: 30px 0;
+      padding: 25px;
+      margin: 25px 0;
       overflow-x: auto;
       box-shadow: var(--shadow);
     }
@@ -241,155 +393,150 @@
     }
 
     .node {
-      fill: var(--bg3);
+      fill: var(--bg);
       stroke: var(--border);
-      stroke-width: 1.5px;
+      stroke-width: 2px;
       rx: 6px;
       ry: 6px;
     }
 
-    .node.active {
-      stroke: var(--teal);
-      fill: rgba(0,212,170,0.05);
-    }
-
-    .node.alert {
-      stroke: var(--red);
-      fill: rgba(255,71,87,0.05);
-    }
-
-    .arrow {
-      stroke: var(--text3);
-      stroke-width: 2px;
-      fill: none;
-      marker-end: url(#arrowhead);
-    }
-
-    .arrow.highlight {
-      stroke: var(--teal);
-      marker-end: url(#arrowhead-teal);
-    }
+    .node.model { stroke: var(--blue); fill: rgba(0, 176, 255, 0.03); }
+    .node.rule { stroke: var(--amber); fill: rgba(255, 178, 55, 0.03); }
+    .node.active { stroke: var(--teal); fill: rgba(0, 212, 170, 0.03); }
+    .node.data { stroke: var(--purple); fill: rgba(176, 107, 255, 0.03); }
 
     .node-text {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      fill: var(--text);
+      font-family: var(--font-sans);
+      font-size: 10px;
+      fill: var(--text2);
       text-anchor: middle;
     }
 
     .node-text.title {
       font-family: var(--font-display);
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 700;
+      fill: var(--text);
+    }
+
+    .flow-line {
+      stroke: var(--text3);
+      stroke-width: 2px;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .flow-line.highlight {
+      stroke: var(--teal);
+      marker-end: url(#arrow-teal);
     }
 
     /* UI Layout Diagram */
-    .ui-layout-map {
+    .ui-grid-map {
       display: grid;
-      grid-template-areas: 
-        "head head head"
-        "side alert details"
-        "side charts details";
-      grid-template-columns: 240px 1fr 340px;
-      grid-template-rows: 50px 220px 180px;
-      gap: 8px;
+      grid-template-areas:
+        "head head"
+        "sidebar board"
+        "sidebar details"
+        "charts details";
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: auto auto auto auto;
+      gap: 12px;
       background: var(--bg3);
-      padding: 8px;
+      padding: 12px;
       border-radius: var(--r-lg);
       border: 1px solid var(--border);
-      margin-bottom: 30px;
+      margin: 30px 0;
     }
 
-    .ui-section {
+    .ui-box {
       background: var(--bg2);
-      border: 1px dashed var(--text3);
-      border-radius: 4px;
-      padding: 8px;
+      border: 1px dashed var(--text4);
+      border-radius: 6px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      font-size: 12.5px;
+    }
+
+    .ui-box.head { grid-area: head; border-color: var(--teal); }
+    .ui-box.sidebar { grid-area: sidebar; border-color: var(--blue); }
+    .ui-box.board { grid-area: board; border-color: var(--amber); }
+    .ui-box.details { grid-area: details; border-color: var(--purple); }
+    .ui-box.charts { grid-area: charts; border-color: var(--text2); }
+
+    .ui-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
       align-items: center;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      text-align: center;
-      color: var(--text3);
+      gap: 6px;
     }
 
-    .ui-section.header {
-      grid-area: head;
-      border-color: var(--teal);
-      color: var(--teal);
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: 1px dashed var(--teal);
-    }
-
-    .ui-section.sidebar {
-      grid-area: side;
-      border-color: var(--blue);
-      color: var(--blue);
-    }
-
-    .ui-section.alerts {
-      grid-area: alert;
-      border-color: var(--amber);
-      color: var(--amber);
-    }
-
-    .ui-section.details {
-      grid-area: details;
-      border-color: var(--purple);
-      color: var(--purple);
-    }
-
-    .ui-section.charts {
-      grid-area: charts;
-      border-color: var(--text2);
-      color: var(--text2);
-    }
-
-    .ui-label {
-      font-weight: bold;
-      margin-bottom: 4px;
-      font-size: 11px;
-    }
+    .ui-desc { color: var(--text2); line-height: 1.4; text-align: justify; }
 
     /* Interactive Tab Simulator */
-    .sim-tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--bg);
-      padding: 6px;
-      border-radius: var(--r) var(--r) 0 0;
+    .sim-container {
       border: 1px solid var(--border);
-      border-bottom: none;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      margin: 30px 0;
+      box-shadow: var(--shadow);
+      background: var(--bg2);
     }
 
-    .sim-tab-btn {
+    .sim-header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sim-title {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--teal);
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-bar {
+      display: flex;
+      gap: 4px;
+      background: #060b13;
+      padding: 6px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sim-btn {
       background: transparent;
       border: none;
       color: var(--text3);
-      padding: 8px 16px;
       font-family: var(--font-mono);
       font-size: 11px;
       font-weight: 600;
-      cursor: pointer;
+      padding: 6px 14px;
       border-radius: 4px;
+      cursor: pointer;
       transition: all 0.2s;
     }
 
-    .sim-tab-btn.active {
+    .sim-btn.active {
       background: var(--bg2);
       color: var(--teal);
     }
 
-    .sim-content {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 0 0 var(--r-lg) var(--r-lg);
+    .sim-body {
+      background: var(--bg);
       padding: 24px;
-      min-height: 280px;
-      box-shadow: var(--shadow);
+      min-height: 350px;
     }
 
     .sim-pane {
@@ -400,82 +547,111 @@
       display: block;
     }
 
-    .metric-grid {
+    .sim-stat-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
-    .metric-card {
-      background: var(--bg);
+    .sim-stat-card {
+      background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: var(--r);
       padding: 12px;
-      text-align: left;
+      border-radius: var(--r);
+      text-align: center;
     }
 
-    .metric-name {
-      font-size: 10px;
-      color: var(--text3);
-      text-transform: uppercase;
-      font-family: var(--font-mono);
+    .sim-stat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; font-family: var(--font-mono); margin-bottom: 4px; }
+    .sim-stat-val { font-size: 20px; font-weight: 700; color: var(--teal); }
+
+    .sim-flex-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
     }
 
-    .metric-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--teal);
-      font-family: var(--font-display);
-    }
-
-    .mock-alert-list {
+    .sim-feed {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .mock-alert-item {
-      background: var(--bg);
+    .sim-feed-item {
+      background: var(--bg2);
       border: 1px solid var(--border);
       border-left: 4px solid var(--red);
       border-radius: var(--r);
-      padding: 10px 14px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
     }
-
-    .mock-alert-title {
-      font-weight: 600;
-      color: var(--red);
+    .sim-feed-item.selected {
+      border-color: var(--teal);
+      background: rgba(0, 212, 170, 0.03);
     }
+    .sim-feed-item.exfil { border-left-color: var(--purple); }
+    .sim-feed-item.scan { border-left-color: var(--amber); }
 
-    .mock-alert-ip {
-      font-family: var(--font-mono);
-      color: var(--text2);
-    }
+    .sim-feed-title { font-weight: 600; font-size: 13.5px; color: var(--text); }
+    .sim-feed-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-top: 4px; }
 
-    .mock-btn-group {
-      display: flex;
-      gap: 6px;
-    }
-
-    .mock-btn {
-      padding: 4px 8px;
+    .sim-actions { display: flex; gap: 6px; }
+    .sim-action-btn {
+      padding: 6px 10px;
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       border-radius: 4px;
       cursor: pointer;
       font-family: var(--font-mono);
       background: var(--bg3);
       border: 1px solid var(--border);
-      color: var(--text2);
+      color: var(--text);
+      transition: all 0.15s;
     }
 
-    .mock-btn.tp { background: var(--teal2); color: var(--teal); border-color: rgba(0,212,170,0.3); }
-    .mock-btn.fp { background: var(--red2); color: var(--red); border-color: rgba(255,71,87,0.3); }
+    .sim-action-btn.tp { background: var(--teal2); color: var(--teal); border-color: rgba(0, 212, 170, 0.3); }
+    .sim-action-btn.fp { background: var(--red2); color: var(--red); border-color: rgba(255, 71, 87, 0.3); }
+    .sim-action-btn.block { background: var(--purple2); color: var(--purple); border-color: rgba(176, 107, 255, 0.3); }
+
+    .sim-inspector {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .inspector-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--blue);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .shap-sim-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .shap-sim-row {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+    .shap-sim-lbl { width: 100px; color: var(--text2); }
+    .shap-sim-track { flex: 1; background: var(--bg); height: 8px; border-radius: 4px; overflow: hidden; display: flex; }
+    .shap-sim-bar { height: 100%; }
 
     .interactive-note {
       font-size: 12px;
@@ -483,294 +659,1285 @@
       margin-top: 15px;
       font-style: italic;
     }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-teal { background: var(--teal2); color: var(--teal); border: 1px solid rgba(0,212,170,0.3); }
+    .badge-red { background: var(--red2); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+    .badge-amber { background: var(--amber2); color: var(--amber); border: 1px solid rgba(255,178,55,0.3); }
+    .badge-blue { background: var(--blue2); color: var(--blue); border: 1px solid rgba(0,176,255,0.3); }
+    .badge-purple { background: var(--purple2); color: var(--purple); border: 1px solid rgba(176,107,255,0.3); }
+
+    /* Sandbox Form */
+    .sandbox-injector-form {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      text-transform: uppercase;
+    }
+
+    .form-group input, .form-group select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--teal);
+    }
+
+    .btn-inject {
+      grid-column: span 3;
+      background: var(--teal);
+      color: var(--bg);
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      font-size: 11px;
+      transition: all 0.2s;
+    }
+    .btn-inject:hover {
+      opacity: 0.9;
+      box-shadow: 0 0 10px var(--teal2);
+    }
+
+    /* Stepper UI */
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .step-item {
+      display: flex;
+      gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: var(--r);
+    }
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--teal2);
+      color: var(--teal);
+      border: 1px solid var(--teal);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .step-content h4 {
+      margin: 0 0 4px 0;
+      font-family: var(--font-display);
+      font-size: 15px;
+      color: var(--teal);
+    }
+
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <!-- Left Sidebar Navigation -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L20 6V12C20 16.4 16.4 20.5 12 22C7.6 20.5 4 16.4 4 12V6L12 2Z" stroke="#00d4aa" stroke-width="1.8" fill="none"/>
+          <circle cx="12" cy="12" r="3" fill="#00d4aa" opacity=".8"/>
+          <line x1="12" y1="9" x2="12" y2="5" stroke="#00d4aa" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="brand-name">PHANTOMFLOW</div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="guide-search" placeholder="Search manual..." onkeyup="filterGuide()">
+    </div>
+
+    <div class="nav-container">
+      <div class="nav-group">
+        <div class="nav-title">1. Introduction</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#system-overview" class="nav-link">System Overview</a></li>
+          <li class="nav-item"><a href="#genesis-phases" class="nav-link">Project Genesis & Timeline</a></li>
+          <li class="nav-item"><a href="#pipeline-architecture" class="nav-link">Pipeline Architecture</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">2. Ingestion & Features</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#packet-sniffer" class="nav-link">Raw PCAP Sniffer</a></li>
+          <li class="nav-item"><a href="#feature-extraction" class="nav-link">Feature Engineering</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">3. Model Architectures</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#decoupled-ml" class="nav-link">Two-Stage ML Pipeline</a></li>
+          <li class="nav-item"><a href="#rule-detectors" class="nav-link">Behavioral Detectors</a></li>
+          <li class="nav-item"><a href="#active-learning" class="nav-link">Active Feedback Learning</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">4. Active Mitigation</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#mitigation-actions" class="nav-link">Response Engines</a></li>
+          <li class="nav-item"><a href="#suppression-engine" class="nav-link">Suppression Rules</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">5. SOC Dashboard Map</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#dashboard-details" class="nav-link">Interface Layout Map</a></li>
+          <li class="nav-item"><a href="#triage-workflow" class="nav-link">Triage Standard Workflow</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">6. Operations & Data</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#database-schema" class="nav-link">Database Schema</a></li>
+          <li class="nav-item"><a href="#reset-suite-doc" class="nav-link">Reset Suite Mechanics</a></li>
+          <li class="nav-item"><a href="#developer-orchestration" class="nav-link">Startup Orchestration</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">7. Interactive Sandbox</div>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#sandbox-widget" class="nav-link">Operations Sandbox</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Panel -->
+  <div class="main-content">
     
-    <!-- Top Header -->
-    <div class="header">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L20 6V12C20 16.4 16.4 20.5 12 22C7.6 20.5 4 16.4 4 12V6L12 2Z" stroke="#00d4aa" stroke-width="1.8" fill="none"/>
-            <circle cx="12" cy="12" r="3" fill="#00d4aa" opacity=".8"/>
-            <line x1="12" y1="9" x2="12" y2="5" stroke="#00d4aa" stroke-width="1.2"/>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-name">PHANTOMFLOW</div>
-          <div class="brand-sub">security suite v2.2.0 · technical guide</div>
-        </div>
+    <div class="doc-header">
+      <div>
+        <h1>Technical Operations & Architecture Manual</h1>
+        <p style="margin-bottom: 0; font-size: 13.5px; color: var(--text3);">PhantomFlow Security Suite v2.2.0 · Comprehensive Enterprise Guide</p>
       </div>
       <a href="/dashboard/index.html" class="btn-back">← Back to Dashboard</a>
     </div>
 
-    <!-- Intro -->
-    <h1>Technical & Architectural Guide</h1>
-    <p>Welcome to the complete deployment, architecture, and dashboard operations manual for the PhantomFlow encrypted traffic threat detection framework. This guide details the backend pipelines, machine learning ensembles, rule engines, active response models, and SOC workflows.</p>
+    <!-- 1. Introduction -->
+    <section id="system-overview">
+      <h2>1. System Overview & Project Objectives</h2>
+      <p>PhantomFlow is an enterprise-grade network threat detection platform specializing in identifying **covert communications, machine learning anomalies, and ransomware actions** in encrypted and decrypted network packet sequences. Unlike traditional Network Intrusion Detection Systems (NIDS) that inspect unencrypted headers and payloads or require expensive TLS decryption proxies, PhantomFlow analyzes encrypted traffic <strong>without decryption</strong> by tracking flow statistics, temporal frequencies, and packet sequence dimensions.</p>
+      <p>The platform bridges machine learning anomaly pipelines (e.g., LSTMs, Isolation Forests) with structural behavioral rule-based threat modules. This dual approach ensures high-performance detection across a broad attack surface, capturing C2 beacons, DNS tunnels, data exfiltration, horizontal/vertical port scans, SSH/RDP brute forcing, lateral moves, and ransomware behavior.</p>
+    </section>
 
-    <!-- Architecture flow -->
-    <h2>1. Data Acquisition & Processing Pipeline</h2>
-    <p>PhantomFlow runs an asynchronous, highly efficient pipeline from raw packet capture to dashboard telemetry. The diagram below details the data flow through all systems:</p>
-
-    <div class="flowchart">
-      <svg width="800" height="340" viewBox="0 0 800 340">
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
-          </marker>
-          <marker id="arrowhead-teal" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#00d4aa" />
-          </marker>
-        </defs>
-
-        <!-- Network Tap -->
-        <g transform="translate(10, 130)">
-          <rect width="100" height="60" class="node active"/>
-          <text x="50" y="25" class="node-text title">Network Tap</text>
-          <text x="50" y="45" class="node-text">NIC / SPAN</text>
-        </g>
-        <path d="M110 160 H150" class="arrow highlight"/>
-
-        <!-- PCAP Sniffer -->
-        <g transform="translate(160, 130)">
-          <rect width="100" height="60" class="node active"/>
-          <text x="50" y="25" class="node-text title">Packet Sniffer</text>
-          <text x="50" y="45" class="node-text">Scapy Loop</text>
-        </g>
-        <path d="M260 160 H300" class="arrow highlight"/>
-
-        <!-- Kafka -->
-        <g transform="translate(310, 130)">
-          <rect width="100" height="60" class="node active"/>
-          <text x="50" y="25" class="node-text title">Kafka Stream</text>
-          <text x="50" y="45" class="node-text">network-flows</text>
-        </g>
-        <path d="M410 160 H450" class="arrow highlight"/>
-
-        <!-- Orchestrator -->
-        <g transform="translate(460, 130)">
-          <rect width="120" height="60" class="node active"/>
-          <text x="60" y="25" class="node-text title">Orchestrator</text>
-          <text x="60" y="45" class="node-text">Feature Extract</text>
-        </g>
-        <path d="M580 160 H610" class="arrow highlight"/>
-
-        <!-- Threat Detectors -->
-        <g transform="translate(620, 20)">
-          <rect width="160" height="70" class="node alert"/>
-          <text x="80" y="25" class="node-text title" style="fill:var(--red)">ML Ensemble</text>
-          <text x="80" y="45" class="node-text">LSTM (C2 Beacon)</text>
-          <text x="80" y="60" class="node-text">IsoForest (Exfil)</text>
-        </g>
-
-        <g transform="translate(620, 125)">
-          <rect width="160" height="70" class="node alert"/>
-          <text x="80" y="25" class="node-text title" style="fill:var(--red)">Rule Detectors</text>
-          <text x="80" y="45" class="node-text">HyperLogLog Scan</text>
-          <text x="80" y="60" class="node-text">Ransomware Match</text>
-        </g>
-
-        <g transform="translate(620, 230)">
-          <rect width="160" height="70" class="node active"/>
-          <text x="80" y="25" class="node-text title" style="fill:var(--teal)">Databases</text>
-          <text x="80" y="45" class="node-text">Postgres (Persist)</text>
-          <text x="80" y="60" class="node-text">Redis (Cache/Stats)</text>
-        </g>
-
-        <!-- Dynamic Arrows for Orchestrator to Detectors -->
-        <path d="M540 130 V55 H620" class="arrow highlight"/>
-        <path d="M580 160 H620" class="arrow highlight"/>
-        <path d="M540 190 V265 H620" class="arrow highlight"/>
-
-        <!-- Feed connections -->
-        <path d="M700 90 V125" class="arrow"/>
-        <path d="M700 195 V230" class="arrow"/>
-      </svg>
-    </div>
-
-    <!-- Pipeline Components -->
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">
-          <span class="card-title-icon">📡</span>
-          <span>Acquisition & Ingestion</span>
-        </div>
-        <p>The **Packet Sniffer** captures network frames in real-time. To optimize performance, the sniffer applies defensive filters, discarding loopback packets (IP `127.0.0.1` and `::1`) and internal service ports (Redis, Kafka, and PostgreSQL sockets) so that only host-to-host network traffic enters the pipeline.</p>
-        <p>Flow structures are serialized as JSON payloads and written to the <code>network-flows</code> **Kafka Message Broker** queue, which decouples network sniffing from memory-intensive model evaluation.</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title">
-          <span class="card-title-icon">🤖</span>
-          <span>Threat Classification</span>
-        </div>
-        <p>The **Pipeline Orchestrator** pulls flows from Kafka, extracts statistical features, and routes them through parallel classification engines:</p>
-        <ul>
-          <li>**ML Ensemble**: LSTM networks detect C2 beacon timing anomalies, while Isolation Forests compute exfiltration thresholds.</li>
-          <li>**Rule Engines**: Memory-efficient Redis HyperLogLog structures track source IPs to flag horizontal scans, vertical scans, brute-force attempts, and multi-signal ransomware signatures.</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- UI Map Layout Section -->
-    <h2>2. SOC Dashboard Interface Layout</h2>
-    <p>The main visual dashboard is split into distinct zones for optimal workflow control. The layout chart below maps the primary sections:</p>
-    
-    <div class="ui-layout-map">
-      <div class="ui-section header">
-        <div class="ui-label">Header & Navigation</div>
-        <div>Brand, Live Telemetry Rate, Reset Suite Button</div>
-      </div>
-      <div class="ui-section sidebar">
-        <div class="ui-label">Metrics Column</div>
-        <div>Active Threats, C2, DNS, Exfil, Port Scans Counters</div>
-      </div>
-      <div class="ui-section alerts">
-        <div class="ui-label">Live Threat Feed</div>
-        <div>List of unreviewed alerts needing triage</div>
-      </div>
-      <div class="ui-section details">
-        <div class="ui-label">Alert Inspector Details</div>
-        <div>MITRE mappings, AI Explanations, SHAP charts, Response Actions</div>
-      </div>
-      <div class="ui-section charts">
-        <div class="ui-label">Analytics Graphs</div>
-        <div>Threat distributions & timelines (60 min)</div>
-      </div>
-    </div>
-
-    <!-- Interactive Simulation Tab Widget -->
-    <h2>3. Interactive Dashboard Tab Simulator</h2>
-    <p>Use this interactive widget to preview and understand the functionality of each main tab on the live dashboard:</p>
-
-    <div class="sim-tabs">
-      <button class="sim-tab-btn active" onclick="switchSimTab('alerts')">SOC ALERTS</button>
-      <button class="sim-tab-btn" onclick="switchSimTab('hunt')">HUNT</button>
-      <button class="sim-tab-btn" onclick="switchSimTab('response')">RESPONSE QUEUE</button>
-      <button class="sim-tab-btn" onclick="switchSimTab('suppress')">SUPPRESSION RULES</button>
-    </div>
-    
-    <div class="sim-content">
+    <section id="genesis-phases">
+      <h2>Project Genesis, Evaluation, and Tuning Phases</h2>
+      <p>PhantomFlow transitioned from a synthetic laboratory prototype to a production-hardened threat appliance through a systematic, data-driven methodology. The engineering timeline is broken down into six developmental phases:</p>
       
-      <!-- Alerts Tab -->
-      <div id="sim-alerts" class="sim-pane active">
-        <h3 style="margin-top: 0;">SOC Alerts Tab (Live Threat Ingestion)</h3>
-        <p>This is the default feed. It displays unreviewed threats detected by the ML model. Triaging an alert (marking it TP or FP) retrains the model online and removes it from the list instantly.</p>
-        <div class="metric-grid">
-          <div class="metric-card">
-            <div class="metric-name">Active Threats</div>
-            <div class="metric-value" id="sim-threats-count">1</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-name">C2 Beacons</div>
-            <div class="metric-value">1</div>
+      <div class="stepper">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Synthetic Phase 1.0 (NetworkTrafficGAN)</h4>
+            <p>Initial models were evaluated using synthetic datasets generated via Generative Adversarial Networks (GANs). The classifiers returned perfect (1.00) F1-scores. Code audits revealed the models were memorizing GAN-specific artifacts (like static TCP flags, specific packet numbers) rather than learning generalized threat structures. This phenomenon is known as "shortcut learning."</p>
           </div>
         </div>
-        <div class="mock-alert-list" id="sim-alert-container">
-          <div class="mock-alert-item" id="sim-alert-1">
-            <div>
-              <span class="mock-alert-title">C2 Beacon (T1071.001)</span><br>
-              <span class="mock-alert-ip">10.0.0.45 → 185.220.101.4:443</span>
-            </div>
-            <div class="mock-btn-group">
-              <button class="mock-btn tp" onclick="triageSimAlert('1', 'tp')">✓ TP</button>
-              <button class="mock-btn fp" onclick="triageSimAlert('1', 'fp')">✗ FP</button>
-            </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Real-World Dataset Transition (CTU-13 & CICIDS)</h4>
+            <p>To break shortcut learning, the pipeline was transitioned to raw, real-world botnet recordings (CTU-13, containing active Neris, Murlo, and Virut families). Models trained on one botnet protocol (e.g., Neris HTTP) completely collapsed when evaluated against another (e.g., Murlo IRC), highlighting a failure to generalize under Out-of-Distribution (OOD) conditions.</p>
           </div>
         </div>
-        <p class="interactive-note">Click the TP or FP buttons on the mock alert card to simulate real-time analyst triage and watch the threat counter update!</p>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Protocol-Invariant Calibration</h4>
+            <p>We conducted ablation studies and discarded 44 fields (including protocol numbers, transport flags, and port metadata) from the core model inputs. This left only <strong>6 invariant volumetric features</strong> (durations, bytes ratios, packet distributions). Removing specific protocols forced the model's decision boundary to learn structural traffic constraints. Under this OOD benchmark, model recall stabilized at <strong>79.55%</strong>, though Stage 1 precision remained low at <strong>7.51%</strong>.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Stage 2 Precision Recovery Audit</h4>
+            <p>A precision recovery audit was launched to filter false alarms out of Stage 1. Early heuristic approaches dramatically hurt recall (dropping it to 37.3%). Supervised Random Forests trained on volumetric dimensions overfitted to the training protocols. The engineering group decided that Stage 2 must rely entirely on temporal and sequence-frequency patterns to maintain OOD recall.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Temporal-Only Context Engineering & Exfiltration Hardening</h4>
+            <p>Stage 2 was updated to use a temporal-only feature subset (coefficient of variation of inter-arrival times, sequence trends, duration variances) over a history of up to 15 flows. In tandem, the Exfiltration subsystem was updated to handle missing features (NaNs) and tested against unseen organic streams. This raised OOD C2 precision to <strong>89%</strong>, and stabilized exfiltration detection at a <strong>0.74 F1-score</strong>.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">6</div>
+          <div class="step-content">
+            <h4>Production Calibration & Evaluation (Current State)</h4>
+            <p>To refine the appliance for production, we injected explicit negative benign periodic templates (like NTP queries, DNS health checks, AV updates) directly into the training loop, raising Stage 1 baseline precision to <strong>12.84%</strong>. The Stage 2 Random Forest was calibrated at a decision threshold of <code>0.45</code>, achieving **77.08% precision** on OOD protocols. The Exfiltration detector was hardened using destination-IP history context, yielding **100% precision** with zero false alerts on benign volumetric spikes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pipeline-architecture">
+      <h2>Core Pipeline Architecture Flow</h2>
+      <p>The flow of raw frames through capture, streaming, orchestration, feature modeling, and presentation is shown in the diagram below:</p>
+      
+      <div class="flowchart">
+        <svg width="760" height="300" viewBox="0 0 760 300">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+            </marker>
+            <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#00d4aa" />
+            </marker>
+          </defs>
+
+          <!-- Sniffer & Capture -->
+          <g transform="translate(10, 110)">
+            <rect width="90" height="60" class="node active"/>
+            <text x="45" y="24" class="node-text title">SPAN/TAP Port</text>
+            <text x="45" y="40" class="node-text">Scapy Packet</text>
+            <text x="45" y="52" class="node-text">Capturer</text>
+          </g>
+
+          <g transform="translate(130, 110)">
+            <rect width="95" height="60" class="node active"/>
+            <text x="47.5" y="24" class="node-text title">PCAP Filter</text>
+            <text x="47.5" y="40" class="node-text">Excludes</text>
+            <text x="47.5" y="52" class="node-text">Loopback/Ports</text>
+          </g>
+
+          <g transform="translate(255, 110)">
+            <rect width="95" height="60" class="node active"/>
+            <text x="47.5" y="24" class="node-text title">Kafka Broker</text>
+            <text x="47.5" y="40" class="node-text">Port 9092</text>
+            <text x="47.5" y="52" class="node-text">network-flows</text>
+          </g>
+
+          <!-- Ingest Orchestration -->
+          <g transform="translate(380, 110)">
+            <rect width="100" height="60" class="node active"/>
+            <text x="50" y="24" class="node-text title">Orchestrator</text>
+            <text x="50" y="40" class="node-text">pipeline/</text>
+            <text x="50" y="52" class="node-text">orchestrator.py</text>
+          </g>
+
+          <!-- Detectors & Classifiers -->
+          <g transform="translate(510, 20)">
+            <rect width="115" height="65" class="node model"/>
+            <text x="57.5" y="22" class="node-text title" style="fill:var(--blue)">Two-Stage C2</text>
+            <text x="57.5" y="38" class="node-text">1. Invariant SGD</text>
+            <text x="57.5" y="50" class="node-text">2. RF Periodicity</text>
+            <text x="57.5" y="60" class="node-text">(Thresh=0.45)</text>
+          </g>
+
+          <g transform="translate(510, 105)">
+            <rect width="115" height="65" class="node model"/>
+            <text x="57.5" y="22" class="node-text title" style="fill:var(--blue)">Exfil Subsystem</text>
+            <text x="57.5" y="38" class="node-text">Isolation Forest</text>
+            <text x="57.5" y="50" class="node-text">+ Gradient Boost</text>
+            <text x="57.5" y="60" class="node-text">(Dest Context)</text>
+          </g>
+
+          <g transform="translate(510, 190)">
+            <rect width="115" height="65" class="node rule"/>
+            <text x="57.5" y="22" class="node-text title" style="fill:var(--amber)">Rule Engines</text>
+            <text x="57.5" y="38" class="node-text">Port Scans (HLL)</text>
+            <text x="57.5" y="50" class="node-text">Lateral, Brute</text>
+            <text x="57.5" y="60" class="node-text">& Ransom Correl</text>
+          </g>
+
+          <!-- Data Store -->
+          <g transform="translate(655, 105)">
+            <rect width="95" height="65" class="node data"/>
+            <text x="47.5" y="22" class="node-text title" style="fill:var(--purple)">Data Layers</text>
+            <text x="47.5" y="38" class="node-text">PostgreSQL 15</text>
+            <text x="47.5" y="50" class="node-text">Redis Cache</text>
+            <text x="47.5" y="60" class="node-text">& WebSockets</text>
+          </g>
+
+          <!-- Connections -->
+          <path d="M100 140 H130" class="flow-line highlight"/>
+          <path d="M225 140 H255" class="flow-line highlight"/>
+          <path d="M350 140 H380" class="flow-line highlight"/>
+
+          <path d="M480 130 L510 52.5" class="flow-line highlight"/>
+          <path d="M480 140 H510" class="flow-line highlight"/>
+          <path d="M480 150 L510 222.5" class="flow-line highlight"/>
+
+          <path d="M625 52.5 L655 130" class="flow-line highlight"/>
+          <path d="M625 137.5 H655" class="flow-line highlight"/>
+          <path d="M625 222.5 L655 145" class="flow-line highlight"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 2. Ingestion & Features -->
+    <section id="packet-sniffer">
+      <h2>2. Data Ingestion & Feature Extraction</h2>
+      <h3>A. Raw PCAP Capture and Sniffer Filters</h3>
+      <p>The ingestion architecture starts at the <strong>Packet Sniffer</strong> (<code>capture/pcap_fallback.py</code>). This sniffer attaches to the primary network interface via Python's <code>scapy</code> library. To prevent infinite loops and internal communication spikes from polluting threat telemetry database structures, loopback packets and platform system ports are filtered out at the kernel/socket wrapper layer:</p>
+      
+      <pre><span class="pre-lang">python</span><code># Ingestion filtering inside capture/pcap_fallback.py
+def should_filter_packet(src_ip, dst_ip, sport, dport):
+    # Rule 1: Exclude internal system loopback loop and interface communications
+    if src_ip in ("127.0.0.1", "::1") or dst_ip in ("127.0.0.1", "::1"):
+        return True
+        
+    # Rule 2: Exclude infrastructure and microservices management ports
+    # 9092/9093 (Kafka), 6379 (Redis), 5432/5433 (Postgres), 8000 (FastAPI API), 8080 (UI Server)
+    system_ports = {9092, 9093, 6379, 5432, 5433, 8000, 8080}
+    if sport in system_ports or dport in system_ports:
+        return True
+        
+    return False</code></pre>
+      
+      <p>Packets passing these validation gates are accumulated into 60-second flow objects. Once a window closes, flow objects are serialized to JSON and published to the <code>network-flows</code> Kafka topic running on port <code>9092</code>.</p>
+    </section>
+
+    <section id="feature-extraction">
+      <h2>B. Feature Engineering Equations</h2>
+      <p>When the Kafka consumer in <code>pipeline/orchestrator.py</code> pulls a raw flow session, the <strong>Feature Extractor</strong> (<code>features/extractor.py</code>) maps packet sequences into statistical, protocol-invariant vectors. The key equations are defined below:</p>
+
+      <div class="card">
+        <div class="card-title" style="color: var(--teal);">
+          <span>📈</span>
+          <span>Inter-Arrival Time Coefficient of Variation (IAT CV)</span>
+        </div>
+        <p>This metric represents interval frequency variance divided by mean interval size. In periodic command-and-control beacon structures, the interval is static, meaning IAT variance approaches zero, leading to <code>IAT CV ≈ 0</code>. Human web browsing yields highly irregular intervals, making <code>IAT CV >> 1</code>:</p>
+        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--teal); background: rgba(0,212,170,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(0,212,170,0.2);">
+          \mu = \frac{1}{N}\sum_{i=1}^{N} IAT_i, \quad \sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(IAT_i - \mu)^2}, \quad IAT\ CV = \frac{\sigma}{\mu}
+        </p>
       </div>
 
-      <!-- Hunt Tab -->
-      <div id="sim-hunt" class="sim-pane">
-        <h3 style="margin-top: 0;">Hunt Tab (Historical Threat Search)</h3>
-        <p>The Hunt tab allows analysts to run deep-dive queries across all historical alerts saved in the PostgreSQL database. Unlike the live feed, the Hunt tab includes already reviewed alerts and displays status badges representing their verdict.</p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border); color: var(--text3);">
-              <th style="padding: 8px;">Time</th>
-              <th style="padding: 8px;">Type</th>
-              <th style="padding: 8px;">Severity</th>
-              <th style="padding: 8px;">Source</th>
-              <th style="padding: 8px;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 8px; font-family: var(--font-mono);">21:54:12</td>
-              <td style="padding: 8px; font-weight: 600; color: var(--red);">Port Scan</td>
-              <td style="padding: 8px;"><span class="badge badge-red">High</span></td>
-              <td style="padding: 8px; font-family: var(--font-mono);">192.168.1.104</td>
-              <td style="padding: 8px;"><span class="badge badge-teal">✓ TP</span></td>
-            </tr>
-            <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 8px; font-family: var(--font-mono);">21:55:04</td>
-              <td style="padding: 8px; font-weight: 600; color: var(--blue);">DNS Tunnel</td>
-              <td style="padding: 8px;"><span class="badge badge-amber">Medium</span></td>
-              <td style="padding: 8px; font-family: var(--font-mono);">10.0.0.12</td>
-              <td style="padding: 8px;"><span class="badge badge-red">✗ FP</span></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card">
+        <div class="card-title" style="color: var(--blue);">
+          <span>🌐</span>
+          <span>Shannon Entropy of SNI / DNS Names</span>
+        </div>
+        <p>This metric measures domain label character randomness. Attackers tunneling data over DNS, or using domain generation algorithms (DGA) to avoid static list blockages, produce high-entropy strings:</p>
+        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--blue); background: rgba(0,176,255,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(0,176,255,0.2);">
+          H(X) = -\sum_{i=1}^{M} P(x_i) \log_2 P(x_i)
+        </p>
+        <p style="margin-top: 10px; font-size: 13px; color: var(--text3);">Where <code>P(x_i)</code> is the frequency of occurrence of character <code>x_i</code> in the target server name indication string or domain string of length <code>M</code>.</p>
       </div>
 
-      <!-- Response Queue Tab -->
-      <div id="sim-response" class="sim-pane">
-        <h3 style="margin-top: 0;">Response Queue Tab (Active Mitigation)</h3>
-        <p>The Response Queue implements human-in-the-loop validation for active response commands. Whenever an analyst initiates a mitigation action, a record is added to this queue where senior engineers approve execution.</p>
+      <div class="card">
+        <div class="card-title" style="color: var(--purple);">
+          <span>📊</span>
+          <span>Volumetric Invariant Ratios</span>
+        </div>
+        <p>These track physical data movement dynamics, isolating exfiltration events (high source payload, low destination response payload) regardless of the application protocol:</p>
+        <p style="font-family: var(--font-mono); font-size: 13.5px; color: var(--purple); background: rgba(176,107,255,0.05); padding: 12px; border-radius: 6px; text-align: center; border: 1px dashed rgba(176,107,255,0.2);">
+          Bytes\ Ratio = \frac{\text{orig\_bytes}}{\text{resp\_bytes} + 1}, \quad Packets\ Rate = \frac{\text{orig\_pkts}}{\text{duration\_s}}
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. Model Architectures -->
+    <section id="decoupled-ml">
+      <h2>3. Machine Learning Model Architectures</h2>
+      <h3>A. Two-Stage Decoupled Detection Engine</h3>
+      <p>PhantomFlow runs a two-stage classification strategy to optimize general threat detection under out-of-distribution (OOD) scenarios. This approach captures malware families that use unknown custom protocols:</p>
+
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Architecture Phase</th>
+            <th>Model Type</th>
+            <th>Inputs & Dimensions</th>
+            <th>Primary Objective</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Stage 1 (Invariant Detection)</strong></td>
+            <td>SGD Logist. Regression (Calibrated)</td>
+            <td>6 Invariant Columns: <code>duration_s</code>, <code>total_bytes</code>, <code>orig_bytes</code>, <code>orig_pkts</code>, <code>resp_bytes</code>, <code>bytes_ratio</code></td>
+            <td>Filters out obvious benign flows across the network. Captures any potential beacon or exfiltration signature broadly. High recall, low precision (7.51% precision).</td>
+          </tr>
+          <tr>
+            <td><strong>Stage 2 (Precision Recovery)</strong></td>
+            <td>Random Forest Classifier</td>
+            <td>Sequence Metrics (15 connection history): <code>iat_cv</code>, <code>periodicity_score</code>, <code>dominant_period_ms</code>, <code>trend</code>, <code>duration_cv</code>, <code>history_len</code></td>
+            <td>Triggered only when Stage 1 flags a flow and connection history contains at least 2 flows. Filters out false alarms using temporal periodicity features. Achieves **77.08% OOD C2 Precision**.</td>
+          </tr>
+          <tr>
+            <td><strong>Exfiltration Subsystem</strong></td>
+            <td>Hybrid (Isolation Forest + XGBoost)</td>
+            <td>15 Features (Volume, Entropy, Domain size, DNS names) + Destination History</td>
+            <td>Detects data exfiltration by looking for sustained upload anomalies to new or unique external IPs. Tracking target host history yields **100% Exfil Precision**.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 Why Decoupled Two-Stage?</div>
+        <p>Classifiers that use specific port details or protocols easily fail when threat actors shift from standard HTTP C2 protocols to custom encrypted protocols (like IRC or P2P). Using 6 invariant features in Stage 1 ensures that the network boundary is monitored regardless of the protocol. Stage 2 then uses temporal periodicity to confirm automation patterns without referencing specific protocols.</p>
+      </div>
+    </section>
+
+    <section id="rule-detectors">
+      <h2>B. Rule-Based Threat Detectors</h2>
+      <p>Alongside deep ML pipelines, rule-based modules run to identify structural attacks on the network. These modules track states efficiently using Redis:</p>
+      
+      <div class="card">
+        <div class="card-title" style="color: var(--amber);">
+          <span>🔍</span>
+          <span>Port Scan / Reconnaissance Detector (T1046, T1595)</span>
+        </div>
+        <p>Calculates horizontal and vertical port scans in a 60-second window. Memory overhead is minimized by tracking unique destinations in <strong>Redis HyperLogLog</strong> structures, which offer O(1) performance:</p>
         <ul>
-          <li style="margin-bottom: 8px; color: var(--text2);">🔒 <strong>IP Block</strong>: Blocks external destination C2 IPs on perimeter Palo Alto Panorama firewalls.</li>
-          <li style="margin-bottom: 8px; color: var(--text2);">🌀 <strong>Sinkhole Domain</strong>: Forces DNS sinkhole policies on Cloudflare Gateway DNS servers.</li>
-          <li style="margin-bottom: 8px; color: var(--text2);">🛡️ <strong>Isolate Host</strong>: Quarantines compromised internal computers using EDR APIs (CrowdStrike Falcon).</li>
+          <li><strong>Vertical Scan</strong>: Triggered when a single source IP contacts <code>>= 15</code> unique destination ports on a single target IP.</li>
+          <li><strong>Horizontal Scan</strong>: Triggered when a single source IP contacts <code>>= 20</code> unique destination hosts on a single destination port.</li>
+          <li><strong>Stealth Flag</strong>: Appended when average packet payload size drops below 80 bytes (indicating empty TCP SYN scans).</li>
         </ul>
       </div>
 
-      <!-- Suppression Rules Tab -->
-      <div id="sim-suppress" class="sim-pane">
-        <h3 style="margin-top: 0;">Suppression Rules Tab (Noise Mitigation)</h3>
-        <p>Suppression rules filter out repeating, verified benign alerts (e.g. internal backup server transfers generating exfiltration alerts) to keep the SOC feed clean and focused. Match rules support CIDR ranges, destination ports, and regex patterns.</p>
+      <div class="card">
+        <div class="card-title" style="color: var(--purple);">
+          <span>↔️</span>
+          <span>Lateral Movement Detector (T1021, T1570)</span>
+        </div>
+        <p>Monitors internal, East-West network flow distributions. If a host contacts multiple distinct internal IPs over administrator administration ports within 5 minutes, an alert is raised:</p>
+        <ul>
+          <li><strong>SMB Spread (Port 445)</strong>: Triggered if a host contacts <code>> 4</code> unique internal hosts (often indicates ransomware propagation).</li>
+          <li><strong>RDP Spread (Port 3389)</strong>: Triggered if a host contacts <code>> 3</code> unique internal targets.</li>
+          <li><strong>RPC/WMI Spread (Port 135)</strong>: Triggered if a host contacts <code>> 4</code> unique internal hosts.</li>
+          <li><strong>WinRM Spread (Port 5985)</strong>: Triggered if a host contacts <code>> 3</code> unique internal hosts.</li>
+          <li><strong>SSH Spread (Port 22)</strong>: Triggered if a host contacts <code>> 5</code> unique internal hosts.</li>
+        </ul>
       </div>
 
-    </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--red);">
+          <span>🔨</span>
+          <span>Brute Force credential Attack Detector (T1110)</span>
+        </div>
+        <p>Tracks failed authorization frequencies on authentication ports using Redis counters. It separates targeted brute-forcing from password spraying:</p>
+        <ul>
+          <li><strong>SSH/RDP Brute Force</strong>: Triggered if a source IP makes <code>>= 10</code> SSH attempts/min, or <code>>= 8</code> RDP attempts/min to a single destination.</li>
+          <li><strong>Password Spray</strong>: Triggered if a source IP attempts auth connections to <code>>= 4</code> unique destination hosts at <code>>= 3</code> attempts/min on the same port.</li>
+        </ul>
+      </div>
 
-    <!-- Active Response Configuration -->
-    <h2>4. Technical Setup & Maintenance</h2>
-    <p>To run the developer integration test suite or reset state telemetry:</p>
-    <pre><code># Initialize database schema from scratch
+      <div class="card">
+        <div class="card-title" style="color: var(--red);">
+          <span>☠️</span>
+          <span>Ransomware Behaviour Detector (T1486, T1490)</span>
+        </div>
+        <p>Correlates multiple signals within a 5-minute window to identify active ransomware. To minimize false alarms, the detector requires **at least 2 matching signals** to trigger:</p>
+        <ol>
+          <li><code>smb_write_burst</code>: Large, high-frequency data write operations over Port 445 (SMB) exceeding 500KB.</li>
+          <li><code>shadow_copy_kill_pattern</code>: Internal host scanning/admin connections combined with RPC calls.</li>
+          <li><code>pre_encrypt_c2</code>: Active outbound C2 beacons detected on the same source IP.</li>
+          <li><code>smb_enumeration</code>: High-frequency, low-byte connections on Port 445, indicating directory mapping.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="active-learning">
+      <h2>C. Analyst Feedback & Active Learning Loop</h2>
+      <p>PhantomFlow adapts to its deployment network using supervised online learning. When a security analyst reviews an alert and flags it as a <strong>True Positive (TP)</strong> or <strong>False Positive (FP)</strong>, the backend triggers the feedback loop (<code>pipeline/feedback_trainer.py</code>):</p>
+      
+      <pre><span class="pre-lang">python</span><code># Ingestion active learning step inside feedback_trainer.py
+def update(self, features: dict, label: int) -> bool:
+    # label = 1 (TP, threat), label = 0 (FP, benign)
+    if self._model is None or not hasattr(self._model, 'partial_fit'):
+        return False
+        
+    with feedback_lock:
+        X = self._features_to_vector(features)
+        
+        # Standardize features using the base pipeline scaler
+        if self._imputer:
+            X = self._imputer.transform(X)
+        if self._scaler:
+            X = self._scaler.transform(X)
+            
+        # Incremental update to the SGD model's linear weights
+        self._model.partial_fit(X, [label], classes=[0, 1])
+        
+        # Persist feedback weights to disk
+        joblib.dump({"model": self._model, "scaler": self._scaler}, "models/invariant_feedback.pkl")
+        return True</code></pre>
+      <p>This allows the model to learn and adapt to local network behaviors (like regular offsite backups or database synching) without requiring full pipeline retraining.</p>
+    </section>
+
+    <!-- 4. Active Mitigation -->
+    <section id="mitigation-actions">
+      <h2>4. Human-in-the-Loop Active Response</h2>
+      <p>PhantomFlow provides active response capabilities to contain threats. To prevent accidental lockouts of critical internal infrastructure, the system enforces a strict <strong>Human-in-the-Loop (HITL) approval policy</strong>:</p>
+
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Mitigation Type</th>
+            <th>API Command</th>
+            <th>Database Schema Mapping</th>
+            <th>Automation Policy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Firewall IP Block</strong></td>
+            <td><code>block_ip</code></td>
+            <td>Pushed to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
+            <td>Auto-executes only if model confidence <code>>= 90%</code>. Otherwise, queues in the dashboard for manual approval.</td>
+          </tr>
+          <tr>
+            <td><strong>DNS Domain Sinkhole</strong></td>
+            <td><code>sinkhole_domain</code></td>
+            <td>Pushed to the <code>target_domain</code> column (Postgres <code>TEXT</code> type).</td>
+            <td>Auto-executes only if model confidence <code>>= 95%</code>. Otherwise, queues in the dashboard.</td>
+          </tr>
+          <tr>
+            <td><strong>EDR Host Isolation</strong></td>
+            <td><code>isolate_host</code></td>
+            <td>Pushed to the <code>target_ip</code> column (Postgres <code>INET</code> type).</td>
+            <td><strong>Never Auto-Executes</strong>. Always requires manual analyst approval and notes in the dashboard.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠️ Database Type Constraint Safety</div>
+        <p>In early versions, saving a domain name into the <code>target_ip</code> column caused Postgres to throw <code>invalid input syntax for type inet</code> errors. The API was updated to separate target destinations into <code>target_ip</code> (which validates CIDR formats) and <code>target_domain</code> (which accepts domain strings).</p>
+      </div>
+    </section>
+
+    <section id="suppression-engine">
+      <h2>Suppression Rules Engine</h2>
+      <p>Suppression rules allow analysts to filter out known, benign activities (like administrative network scans or scheduled transfers). If a network flow matches an active suppression rule, the alert is silenced: it is stored in the database but will not trigger visual banners or populate metric counters.</p>
+      
+      <p>When a new suppression rule is created, the system also runs a **retroactive suppression check** in <code>api/routes/suppression.py</code>. This updates matching, unreviewed alerts in the database to a status of <code>'suppressed'</code>. This ensures that the dashboard instantly cleans up related alerts without requiring a page reload.</p>
+    </section>
+
+    <!-- 5. SOC Dashboard Map -->
+    <section id="dashboard-details">
+      <h2>5. SOC Dashboard Interface Map</h2>
+      <p>The dashboard layout maps components into five distinct grids to make threat review intuitive:</p>
+
+      <div class="ui-grid-map">
+        <div class="ui-box head">
+          <div class="ui-title">
+            <span style="color:var(--teal)">■</span> 1. Dashboard Header
+          </div>
+          <div class="ui-desc">Displays system connection state (Live/Offline), average flow ingestion rate, user guide link, and the developer **Reset Suite** action button.</div>
+        </div>
+        
+        <div class="ui-box sidebar">
+          <div class="ui-title">
+            <span style="color:var(--blue)">■</span> 2. Metric Counters
+          </div>
+          <div class="ui-desc">Displays active counters for all threat categories. **Flows Analyzed** supports clicks: selecting it opens a modal showing a real-time table of raw network flows passing through the sniffer.</div>
+        </div>
+        
+        <div class="ui-box board">
+          <div class="ui-title">
+            <span style="color:var(--amber)">■</span> 3. Chronological Alert Feed
+          </div>
+          <div class="ui-desc">Displays a real-time list of unreviewed alerts. Clicking TP/FP/Suppress filters the alert out of the UI instantly.</div>
+        </div>
+        
+        <div class="ui-box details">
+          <div class="ui-title">
+            <span style="color:var(--purple)">■</span> 4. Forensic Detail Inspector
+          </div>
+          <div class="ui-desc">Displays detailed forensics on click: model confidence, SHAP feature importance charts, MITRE TTP maps, and active response buttons.</div>
+        </div>
+        
+        <div class="ui-box charts">
+          <div class="ui-title">
+            <span style="color:var(--text2)">■</span> 5. Threat Analytics & ATT&CK Matrix
+          </div>
+          <div class="ui-desc">Visualizes 60-minute threat distributions and a 12-bin sparkline chart. Click a sparkline bin to filter alerts by that specific 5-minute window. Also displays MITRE ATT&CK technique maps with clickable info overlays.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="triage-workflow">
+      <h2>Triage Standard Operating Workflow</h2>
+      <p>Security analysts should follow this step-by-step triage workflow when an alert is generated:</p>
+      
+      <div class="stepper">
+        <div class="step-item">
+          <div class="step-number">A</div>
+          <div class="step-content">
+            <h4>Select Alert & Review Summary</h4>
+            <p>Click the new alert in the chronological feed. Review the severity rating and read the summary in the Explanation box to understand the threat type.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">B</div>
+          <div class="step-content">
+            <h4>Analyze SHAP Feature Contributions</h4>
+            <p>Inspect the SHAP horizontal bar graph in the detail inspector. Check which features (e.g., <code>iat_cv</code>, <code>bytes_ratio</code>, <code>periodicity_score</code>) contributed most to the model's decision.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">C</div>
+          <div class="step-content">
+            <h4>Identify Verdict & Retrain</h4>
+            <p>Determine whether the alert is malicious (True Positive) or benign (False Positive):</p>
+            <ul>
+              <li><strong>True Positive (Malicious)</strong>: Click **TP** to update and reinforce the model. Select an Active Response action (e.g., Block IP, Isolate Host) to isolate the threat.</li>
+              <li><strong>False Positive (Benign)</strong>: Click **FP** to train the model to ignore this traffic profile. If the traffic is part of a recurring business process, click **Suppress** to create a permanent rule.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Operations & Data -->
+    <section id="database-schema">
+      <h2>6. Operations & Database</h2>
+      <h3>A. PostgreSQL Database Schema</h3>
+      <p>The platform database schema (PostgreSQL 15) handles persistent storage for flows, alerts, response audits, and suppression rules:</p>
+      
+      <pre><span class="pre-lang">SQL</span><code>-- Schema layout for the PhantomFlow database engine
+
+-- 1. Ingested Flow Records
+CREATE TABLE flows (
+    flow_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    timestamp         TIMESTAMPTZ NOT NULL,
+    src_ip            INET NOT NULL,
+    dst_ip            INET NOT NULL,
+    src_port          INTEGER,
+    dst_port          INTEGER,
+    protocol          VARCHAR(10),
+    sni               TEXT,
+    orig_bytes        BIGINT,
+    resp_bytes        BIGINT,
+    bytes_ratio       FLOAT,
+    iat_mean_ms       FLOAT,
+    iat_cv            FLOAT,
+    periodicity_score FLOAT,
+    dns_query         TEXT,
+    dns_entropy       FLOAT,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Security Alerts Table
+CREATE TABLE alerts (
+    alert_id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    flow_id           UUID REFERENCES flows(flow_id) ON DELETE CASCADE,
+    timestamp         TIMESTAMPTZ NOT NULL,
+    threat_type       VARCHAR(50) NOT NULL,
+    severity          VARCHAR(20) NOT NULL,
+    confidence        FLOAT NOT NULL,
+    shap_values       JSONB,
+    explanation       TEXT,
+    mitre_ttps        TEXT[],
+    analyst_status    VARCHAR(20) DEFAULT 'unreviewed' 
+                      CHECK (analyst_status IN ('unreviewed', 'confirmed_tp', 'false_positive', 'escalated', 'suppressed')),
+    analyst_id        VARCHAR(100),
+    analyst_notes     TEXT,
+    reviewed_at       TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Active Response Audit Logs
+CREATE TABLE response_audit (
+    audit_id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    alert_id          UUID REFERENCES alerts(alert_id) ON DELETE CASCADE,
+    action            VARCHAR(50) NOT NULL,
+    target_ip         INET,
+    target_domain     TEXT,
+    approved_by       VARCHAR(100), -- "SYSTEM_AUTO" or analyst username
+    approved_at       TIMESTAMPTZ,
+    expires_at        TIMESTAMPTZ NOT NULL,
+    executed_at       TIMESTAMPTZ,
+    status            VARCHAR(20) DEFAULT 'pending' 
+                      CHECK (status IN ('pending', 'executed', 'revoked', 'expired', 'failed')),
+    error_detail      TEXT,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Suppression Rules Registry
+CREATE TABLE suppression_rules (
+    rule_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name              VARCHAR(200) NOT NULL,
+    description       TEXT,
+    src_ip_cidr       CIDR,
+    dst_ip_cidr       CIDR,
+    dst_port          INTEGER,
+    sni_pattern       TEXT,
+    threat_type       VARCHAR(50),
+    created_by        VARCHAR(100) NOT NULL,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    expires_at        TIMESTAMPTZ,
+    is_active         BOOLEAN DEFAULT TRUE,
+    justification     TEXT NOT NULL,
+    ticket_reference  VARCHAR(50)
+);
+
+-- Index maps optimized for real-time dashboard updates
+CREATE INDEX idx_alerts_timestamp ON alerts(timestamp DESC);
+CREATE INDEX idx_alerts_status    ON alerts(analyst_status);
+CREATE INDEX idx_flows_src_ip     ON flows(src_ip);
+CREATE INDEX idx_flows_dst_ip     ON flows(dst_ip);</code></pre>
+    </section>
+
+    <section id="reset-suite-doc">
+      <h2>B. Reset Suite Mechanics</h2>
+      <p>To support testing, developer controls expose a **Reset Suite** action in the header. Triggering this button calls the backend route <code>/api/alerts/reset</code>. The endpoint performs two operations:</p>
+      <ol>
+        <li>Runs database truncations on Postgres tables (deleting all flows, alerts, response audit history, and custom suppression rules).</li>
+        <li>Flushes the Redis cache (wiping all HyperLogLog tracking structures, brute-force counters, and active metrics).</li>
+      </ol>
+      <p>This returns the system to a clean, fresh state for testing and validation.</p>
+    </section>
+
+    <section id="developer-orchestration">
+      <h2>C. Startup & Script Orchestration</h2>
+      <p>The platform runs using the Windows command script <code>run_phantomflow.bat</code>. This script manages service dependency order and database setup on startup:</p>
+      
+      <pre><span class="pre-lang">cmd</span><code>@echo off
+echo Starting PhantomFlow Infrastructure Suite...
+
+:: 1. Launch Docker Desktop and start databases
+docker-compose -f docker/docker-compose.yml up -d
+
+:: 2. Wait for Postgres (Port 5433) and Redis (Port 6379)
+python scratch/wait_for_services.py
+
+:: 3. Run database migrations to create tables and indexes
 python scratch/init_db.py
 
-# Wipe PostgreSQL logs & flush Redis counters
-python clear_db.py
+:: 4. Seed database with mock alerts if the database is empty
+python seed_alerts.py
 
-# Launch all Python microservices (FastAPI uvicorn, Sniffer, Orchestrator)
-python start_all.py</code></pre>
-    <p>Alternatively, Windows systems can double-click the <code>run_phantomflow.bat</code> script to run these steps automatically.</p>
+:: 5. Launch FastAPI backend API (port 8000) and Web sniffer
+start python api/main.py
+start python capture/pcap_fallback.py
+
+echo PhantomFlow services successfully initialized and running.</code></pre>
+    </section>
+
+    <!-- Simulation Workspace widget -->
+    <section id="sandbox-widget">
+      <h2>7. Interactive Operations Sandbox</h2>
+      <p>Test the dashboard workflows using this interactive simulator. Spawn custom alerts, triage them as True/False Positives, review the metrics updates, and track mitigation events in the Response tab:</p>
+      
+      <div class="sim-container">
+        <div class="sim-header">
+          <div class="sim-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <span>PHANTOMFLOW // ANALYST WORKSPACE SIMULATOR</span>
+          </div>
+          <span class="badge badge-teal">SANDBOX ONLINE</span>
+        </div>
+        
+        <div class="sim-bar">
+          <button class="sim-btn active" id="sim-tab-btn-alerts" onclick="switchSimTab('alerts')">SOC ALERTS</button>
+          <button class="sim-btn" id="sim-tab-btn-hunt" onclick="switchSimTab('hunt')">HUNT HISTORICAL</button>
+          <button class="sim-btn" id="sim-tab-btn-responses" onclick="switchSimTab('responses')">RESPONSE STATUS</button>
+        </div>
+
+        <div class="sim-body">
+          
+          <!-- Alerts pane -->
+          <div id="sb-alerts" class="sim-pane active">
+            <div class="sim-stat-grid">
+              <div class="sim-stat-card">
+                <div class="sim-stat-lbl">Active Threats</div>
+                <div class="sim-stat-val" id="count-active">2</div>
+              </div>
+              <div class="sim-stat-card">
+                <div class="sim-stat-lbl">C2 Beacons</div>
+                <div class="sim-stat-val" id="count-c2">1</div>
+              </div>
+              <div class="sim-stat-card">
+                <div class="sim-stat-lbl">Exfiltrations</div>
+                <div class="sim-stat-val" id="count-exfil">1</div>
+              </div>
+              <div class="sim-stat-card">
+                <div class="sim-stat-lbl">Port Scans</div>
+                <div class="sim-stat-val" id="count-scan">0</div>
+              </div>
+            </div>
+
+            <div class="sim-flex-layout">
+              <!-- Left: Alerts Feed list -->
+              <div class="sim-feed" id="sb-alerts-feed">
+                <!-- Alert 1 -->
+                <div class="sim-feed-item selected" id="sb-card-1" onclick="selectSimAlert('1')">
+                  <div>
+                    <span class="sim-feed-title">C2 BEACON - LSTM periodicity anomaly</span>
+                    <div class="sim-feed-meta">10.0.0.45 &rarr; 94.130.155.8:443 | Conf: 91%</div>
+                  </div>
+                  <div class="sim-actions">
+                    <button class="sim-action-btn tp" onclick="actionTriage('1', 'confirmed_tp')">TP</button>
+                    <button class="sim-action-btn fp" onclick="actionTriage('1', 'false_positive')">FP</button>
+                  </div>
+                </div>
+
+                <!-- Alert 2 -->
+                <div class="sim-feed-item exfil" id="sb-card-2" onclick="selectSimAlert('2')">
+                  <div>
+                    <span class="sim-feed-title">DATA EXFILTRATION - Outbound ratio anomaly</span>
+                    <div class="sim-feed-meta">10.0.0.122 &rarr; 185.220.101.5:80 | Conf: 82%</div>
+                  </div>
+                  <div class="sim-actions">
+                    <button class="sim-action-btn tp" onclick="actionTriage('2', 'confirmed_tp')">TP</button>
+                    <button class="sim-action-btn fp" onclick="actionTriage('2', 'false_positive')">FP</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Detail inspector panel -->
+              <div class="sim-inspector" id="sb-detail-panel">
+                <div class="inspector-title" id="insp-title">LSTM C2 Beacon Anomaly</div>
+                <div>
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: bold; margin-bottom: 2px;">MITRE TTP Map</div>
+                  <span class="badge badge-teal" id="insp-mitre">T1071.001 (Web Protocols)</span>
+                </div>
+                <div>
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: bold; margin-bottom: 4px;">Model Confidence</div>
+                  <div style="font-size: 20px; font-weight: 700; color: var(--teal);" id="insp-confidence">91%</div>
+                </div>
+                <div>
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: bold; margin-bottom: 4px;">Explanation Summary</div>
+                  <p style="font-size: 12px; line-height: 1.4; color: var(--text2); margin-bottom: 0;" id="insp-explanation">
+                    Flow interval coefficient of variation (0.04) suggests automatic periodic signaling to a remote domain. Consistent with malware beacon profiles.
+                  </p>
+                </div>
+                <div class="shap-sim-bar-container">
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--text3); font-weight: bold; margin-bottom: 4px;">SHAP Feature Importance</div>
+                  
+                  <div class="shap-sim-row">
+                    <div class="shap-sim-lbl">iat_cv</div>
+                    <div class="shap-sim-track">
+                      <div class="shap-sim-bar" id="shap-bar-1" style="width: 85%; background: var(--red);"></div>
+                    </div>
+                  </div>
+                  <div class="shap-sim-row">
+                    <div class="shap-sim-lbl">periodicity</div>
+                    <div class="shap-sim-track">
+                      <div class="shap-sim-bar" id="shap-bar-2" style="width: 60%; background: var(--red);"></div>
+                    </div>
+                  </div>
+                  <div class="shap-sim-row">
+                    <div class="shap-sim-lbl">bytes_ratio</div>
+                    <div class="shap-sim-track">
+                      <div class="shap-sim-bar" id="shap-bar-3" style="width: 15%; background: var(--blue);"></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; gap: 8px;">
+                  <button class="sim-action-btn block" onclick="triggerActiveResponse()">🔒 Block Destination IP</button>
+                  <button class="sim-action-btn block" style="background:var(--red2); color:var(--red); border-color:rgba(255,71,87,0.2)" onclick="triggerHostIsolation()">🔒 Isolate Host</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inject form for sandbox testing -->
+            <div class="sandbox-injector-form">
+              <div style="grid-column: span 3; font-size: 11px; font-weight: bold; color: var(--teal); font-family: var(--font-mono); text-transform: uppercase;">
+                Create and Inject a Custom Threat Alert for Testing
+              </div>
+              <div class="form-group">
+                <label>Threat Category</label>
+                <select id="inj-category">
+                  <option value="c2">LSTM C2 Beacon</option>
+                  <option value="exfil">Exfiltration Anomaly</option>
+                  <option value="scan">Port Scan Recon</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Source Host IP</label>
+                <input type="text" id="inj-src" value="10.0.0.88">
+              </div>
+              <div class="form-group">
+                <label>Target IP / Port</label>
+                <input type="text" id="inj-dst" value="203.0.113.50:443">
+              </div>
+              <button class="btn-inject" onclick="injectCustomAlert()">Inject Mock Threat Flow</button>
+            </div>
+          </div>
+
+          <!-- Hunt pane -->
+          <div id="sb-hunt" class="sim-pane">
+            <p style="font-size: 13px; color: var(--text2); margin-bottom: 15px;">
+              The **Hunt** tab displays historical alerts. Triaged alerts are preserved in this log, with active buttons replaced by review badges:
+            </p>
+            <table style="width: 100%; font-size: 12.5px; text-align: left; border-collapse: collapse;" class="doc-table">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border); color: var(--text3);">
+                  <th style="padding: 10px;">Alert details</th>
+                  <th style="padding: 10px;">IP Route Info</th>
+                  <th style="padding: 10px;">Severity</th>
+                  <th style="padding: 10px;">Triage status</th>
+                </tr>
+              </thead>
+              <tbody id="sb-hunt-tbody">
+                <tr>
+                  <td style="padding: 10px; font-weight: 600;">Horizontal Port Scan</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">10.0.0.14 &rarr; Multi host:80</td>
+                  <td style="padding: 10px;"><span class="badge badge-amber">High</span></td>
+                  <td style="padding: 10px;"><span class="badge badge-teal">✓ TP confirmed</span></td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: 600;">Ransomware SMB spread</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">10.0.0.99 &rarr; Multi host:445</td>
+                  <td style="padding: 10px;"><span class="badge badge-red">Critical</span></td>
+                  <td style="padding: 10px;"><span class="badge badge-teal">✓ TP confirmed</span></td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: 600;">DNS Tunnel Anomaly</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">10.0.0.21 &rarr; random.dga-tunnel.com</td>
+                  <td style="padding: 10px;"><span class="badge badge-blue">Medium</span></td>
+                  <td style="padding: 10px;"><span class="badge badge-red">✗ FP resolved</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Response pane -->
+          <div id="sb-responses" class="sim-pane">
+            <p style="font-size: 13px; color: var(--text2); margin-bottom: 15px;">
+              Active response audit trail. Automated and manual blocks are tracked below:
+            </p>
+            <table style="width: 100%; font-size: 12.5px; text-align: left; border-collapse: collapse;" class="doc-table">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border); color: var(--text3);">
+                  <th style="padding: 10px;">Action Type</th>
+                  <th style="padding: 10px;">Target IP / Domain</th>
+                  <th style="padding: 10px;">Approved By</th>
+                  <th style="padding: 10px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="sb-response-tbody">
+                <tr>
+                  <td style="padding: 10px; font-weight: 600;">block_ip</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">94.130.155.8</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">SYSTEM_AUTO</td>
+                  <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; font-weight: 600;">isolate_host</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">10.0.0.14</td>
+                  <td style="padding: 10px; font-family: var(--font-mono);">analyst-admin</td>
+                  <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </section>
 
   </div>
 
   <script>
-    function switchSimTab(tabId) {
-      document.querySelectorAll('.sim-tab-btn').forEach(btn => {
-        btn.classList.remove('active');
+    // Manual search filter
+    function filterGuide() {
+      const query = document.getElementById('guide-search').value.toLowerCase();
+      const links = document.querySelectorAll('.nav-link');
+      
+      links.forEach(link => {
+        const text = link.textContent.toLowerCase();
+        if (text.includes(query)) {
+          link.style.display = 'block';
+        } else {
+          link.style.display = 'none';
+        }
       });
-      event.target.classList.add('active');
-
-      document.querySelectorAll('.sim-pane').forEach(pane => {
-        pane.classList.remove('active');
-      });
-      document.getElementById('sim-' + tabId).classList.add('active');
     }
 
-    function triageSimAlert(id, verdict) {
-      const card = document.getElementById('sim-alert-' + id);
-      if (card) {
-        card.style.display = 'none';
-        document.getElementById('sim-threats-count').textContent = '0';
-        alert('Triage Successful! Model retrained in background. Threat count updated to 0.');
+    // Tab Data Structures
+    const simAlerts = {
+      '1': {
+        id: '1',
+        title: 'C2 BEACON - LSTM periodicity anomaly',
+        src: '10.0.0.45',
+        dst: '94.130.155.8',
+        port: 443,
+        conf: '91%',
+        mitre: 'T1071.001 (Web Protocols)',
+        severity: 'High',
+        explanation: 'Flow interval coefficient of variation (0.04) suggests automatic periodic signaling to a remote domain. Consistent with malware beacon profiles.',
+        shap: { iat: 85, period: 60, ratio: 15 },
+        colorClass: ''
+      },
+      '2': {
+        id: '2',
+        title: 'DATA EXFILTRATION - Outbound ratio anomaly',
+        src: '10.0.0.122',
+        dst: '185.220.101.5',
+        port: 80,
+        conf: '82%',
+        mitre: 'T1048.003 (Exfiltration over C2)',
+        severity: 'High',
+        explanation: 'Outbound flow volume represents an anomalous payload ratio (large transfer out, negligible return packet streams). Possible exfiltration over HTTP.',
+        shap: { iat: 10, period: 5, ratio: 95 },
+        colorClass: 'exfil'
       }
+    };
+
+    let selectedAlertId = '1';
+    let incrementalId = 3;
+
+    function switchSimTab(tabId) {
+      document.querySelectorAll('.sim-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('sim-tab-btn-' + tabId).classList.add('active');
+
+      document.querySelectorAll('.sim-pane').forEach(pane => pane.classList.remove('active'));
+      document.getElementById('sb-' + tabId).classList.add('active');
+    }
+
+    function selectSimAlert(id) {
+      selectedAlertId = id;
+      document.querySelectorAll('.sim-feed-item').forEach(item => item.classList.remove('selected'));
+      
+      const el = document.getElementById('sb-card-' + id);
+      if (el) el.classList.add('selected');
+
+      const data = simAlerts[id];
+      if (data) {
+        document.getElementById('insp-title').textContent = data.title;
+        document.getElementById('insp-mitre').textContent = data.mitre;
+        document.getElementById('insp-confidence').textContent = data.conf;
+        document.getElementById('insp-explanation').textContent = data.explanation;
+        document.getElementById('shap-bar-1').style.width = data.shap.iat + '%';
+        document.getElementById('shap-bar-2').style.width = data.shap.period + '%';
+        document.getElementById('shap-bar-3').style.width = data.shap.ratio + '%';
+      }
+    }
+
+    function actionTriage(id, verdict) {
+      event.stopPropagation();
+      const alertData = simAlerts[id];
+      if (!alertData) return;
+
+      // 1. Remove from active feed list UI
+      const card = document.getElementById('sb-card-' + id);
+      if (card) card.remove();
+
+      // 2. Add row to Hunt table
+      const tbody = document.getElementById('sb-hunt-tbody');
+      const tr = document.createElement('tr');
+      const badgeClass = alertData.severity === 'High' ? 'badge-amber' : (alertData.severity === 'Critical' ? 'badge-red' : 'badge-blue');
+      const statusBadge = verdict === 'confirmed_tp' ? '<span class="badge badge-teal">✓ TP confirmed</span>' : '<span class="badge badge-red">✗ FP resolved</span>';
+      
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: 600;">${alertData.title}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${alertData.src} &rarr; ${alertData.dst}:${alertData.port}</td>
+        <td style="padding: 10px;"><span class="badge ${badgeClass}">${alertData.severity}</span></td>
+        <td style="padding: 10px;">${statusBadge}</td>
+      `;
+      tbody.appendChild(tr);
+
+      // 3. Subtract count stats
+      const countEl = document.getElementById('count-active');
+      let val = parseInt(countEl.textContent);
+      if (val > 0) countEl.textContent = val - 1;
+
+      if (alertData.title.includes('C2')) {
+        const c2El = document.getElementById('count-c2');
+        let c2v = parseInt(c2El.textContent);
+        if (c2v > 0) c2El.textContent = c2v - 1;
+      } else if (alertData.title.includes('EXFIL')) {
+        const exEl = document.getElementById('count-exfil');
+        let exv = parseInt(exEl.textContent);
+        if (exv > 0) exEl.textContent = exv - 1;
+      } else {
+        const scEl = document.getElementById('count-scan');
+        let scv = parseInt(scEl.textContent);
+        if (scv > 0) scEl.textContent = scv - 1;
+      }
+
+      delete simAlerts[id];
+
+      // Select next alert if any
+      const remainingIds = Object.keys(simAlerts);
+      if (remainingIds.length > 0) {
+        selectSimAlert(remainingIds[0]);
+      } else {
+        document.getElementById('insp-title').textContent = 'No Alerts Selected';
+        document.getElementById('insp-mitre').textContent = 'N/A';
+        document.getElementById('insp-confidence').textContent = '0%';
+        document.getElementById('insp-explanation').textContent = 'All alerts triaged. Streaming simulator feed is empty.';
+        document.getElementById('shap-bar-1').style.width = '0%';
+        document.getElementById('shap-bar-2').style.width = '0%';
+        document.getElementById('shap-bar-3').style.width = '0%';
+      }
+
+      const verdictText = verdict === 'confirmed_tp' ? 'True Positive' : 'False Positive';
+      alert(`Triage registered: Retrained model weights using feedback label [${verdictText}].`);
+    }
+
+    function triggerActiveResponse() {
+      const data = simAlerts[selectedAlertId];
+      if (!data) {
+        alert('No active threat selected to block.');
+        return;
+      }
+
+      // Add execution entry to Response table
+      const tbody = document.getElementById('sb-response-tbody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: 600;">block_ip</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${data.dst}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">manual-analyst</td>
+        <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
+      `;
+      tbody.appendChild(tr);
+      alert(`Active Response triggered: Block action executed for destination IP ${data.dst}. Firewall configuration updated.`);
+    }
+
+    function triggerHostIsolation() {
+      const data = simAlerts[selectedAlertId];
+      if (!data) {
+        alert('No active threat selected to isolate.');
+        return;
+      }
+
+      const tbody = document.getElementById('sb-response-tbody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding: 10px; font-weight: 600;">isolate_host</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${data.src}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">manual-analyst</td>
+        <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
+      `;
+      tbody.appendChild(tr);
+      alert(`Active Response triggered: Isolation request sent to EDR agent on host ${data.src}. Network traffic disabled.`);
+    }
+
+    function injectCustomAlert() {
+      const category = document.getElementById('inj-category').value;
+      const src = document.getElementById('inj-src').value;
+      const dstAndPort = document.getElementById('inj-dst').value;
+      const parts = dstAndPort.split(':');
+      const dst = parts[0] || '198.51.100.12';
+      const port = parts[1] || '443';
+
+      const id = String(incrementalId++);
+      
+      let title = '';
+      let mitre = '';
+      let explanation = '';
+      let shap = {};
+      let severity = '';
+      let cardClass = '';
+
+      if (category === 'c2') {
+        title = 'C2 BEACON - Custom dynamic periodic signature';
+        mitre = 'T1071.001 (Web Protocols)';
+        explanation = `Outbound TLS flow to ${dst}:${port} exhibits a periodic schedule (interval trend matches steady heartbeat).`;
+        shap = { iat: 80, period: 75, ratio: 10 };
+        severity = 'High';
+        cardClass = '';
+      } else if (category === 'exfil') {
+        title = 'DATA EXFILTRATION - Custom volumetric upload spike';
+        mitre = 'T1048.003 (Exfiltration over C2)';
+        explanation = `Host uploaded massive byte sequence (${dst}:${port}) with minimal downstream packet return counts.`;
+        shap = { iat: 10, period: 10, ratio: 90 };
+        severity = 'Critical';
+        cardClass = 'exfil';
+      } else {
+        title = 'PORT SCAN - Active network services discovery';
+        mitre = 'T1046 (Network Service Discovery)';
+        explanation = `Host contacted a high cardinality of distinct destination targets over port ${port} using Redis HLL tracking.`;
+        shap = { iat: 60, period: 10, ratio: 40 };
+        severity = 'Medium';
+        cardClass = 'scan';
+      }
+
+      // Add to datastore
+      simAlerts[id] = {
+        id, title, src, dst, port, conf: '88%', mitre, severity, explanation, shap, colorClass: cardClass
+      };
+
+      // Render new feed item
+      const feed = document.getElementById('sb-alerts-feed');
+      const div = document.createElement('div');
+      div.className = `sim-feed-item ${cardClass}`;
+      div.id = `sb-card-${id}`;
+      div.setAttribute('onclick', `selectSimAlert('${id}')`);
+      div.innerHTML = `
+        <div>
+          <span class="sim-feed-title">${title}</span>
+          <div class="sim-feed-meta">${src} &rarr; ${dst}:${port} | Conf: 88%</div>
+        </div>
+        <div class="sim-actions">
+          <button class="sim-action-btn tp" onclick="actionTriage('${id}', 'confirmed_tp')">TP</button>
+          <button class="sim-action-btn fp" onclick="actionTriage('${id}', 'false_positive')">FP</button>
+        </div>
+      `;
+      feed.appendChild(div);
+
+      // Update counters
+      const countEl = document.getElementById('count-active');
+      countEl.textContent = parseInt(countEl.textContent) + 1;
+
+      if (category === 'c2') {
+        const c2El = document.getElementById('count-c2');
+        c2El.textContent = parseInt(c2El.textContent) + 1;
+      } else if (category === 'exfil') {
+        const exEl = document.getElementById('count-exfil');
+        exEl.textContent = parseInt(exEl.textContent) + 1;
+      } else {
+        const scEl = document.getElementById('count-scan');
+        scEl.textContent = parseInt(scEl.textContent) + 1;
+      }
+
+      selectSimAlert(id);
+      alert(`Mock threat alert successfully injected! Chronological feed updated in real-time.`);
     }
   </script>
 </body>
