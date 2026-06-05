@@ -70,6 +70,42 @@ except Exception as _e:
     log.warning("RansomwareDetector unavailable", exc=_e)
     ransomware_detector = None
 
+try:
+    from models.tls_fingerprint_detector import TLSFingerprintDetector
+    tls_fingerprint_detector = TLSFingerprintDetector(redis_client=_redis)
+except Exception as _e:
+    log.warning("TLSFingerprintDetector unavailable", exc=_e)
+    tls_fingerprint_detector = None
+
+try:
+    from models.tls_cert_detector import TLSCertDetector
+    tls_cert_detector = TLSCertDetector(redis_client=_redis)
+except Exception as _e:
+    log.warning("TLSCertDetector unavailable", exc=_e)
+    tls_cert_detector = None
+
+try:
+    from models.jitter_c2_detector import JitterC2Detector
+    jitter_c2_detector = JitterC2Detector(redis_client=_redis)
+except Exception as _e:
+    log.warning("JitterC2Detector unavailable", exc=_e)
+    jitter_c2_detector = None
+
+try:
+    from models.doh_dot_detector import DoHDotDetector
+    doh_dot_detector = DoHDotDetector(redis_client=_redis)
+except Exception as _e:
+    log.warning("DoHDotDetector unavailable", exc=_e)
+    doh_dot_detector = None
+
+try:
+    from models.shannon_entropy_detector import ShannonEntropyDetector
+    shannon_entropy_detector = ShannonEntropyDetector(redis_client=_redis)
+except Exception as _e:
+    log.warning("ShannonEntropyDetector unavailable", exc=_e)
+    shannon_entropy_detector = None
+
+
 
 def _redis_incr_stat(key: str):
     """Safely increment a Redis counter (best-effort, never crashes the pipeline)."""
@@ -472,6 +508,139 @@ async def _process_flow(
                 _redis_incr_stat("stats:ransomware_count")
         except Exception as e:
             log.error("RansomwareDetector error", exc=e)
+
+    # 3e: TLS Fingerprint Anomaly
+    if tls_fingerprint_detector is not None:
+        try:
+            finger_result = tls_fingerprint_detector.check(flow_data)
+            if finger_result and finger_result.is_threat:
+                rule_alerts.append({
+                    "flow_id":     flow_id,
+                    "timestamp":   datetime.utcnow(),
+                    "threat_type": "c2_beacon",
+                    "severity":    finger_result.severity,
+                    "confidence":  finger_result.confidence,
+                    "src":         src_ip,
+                    "dst":         dst_ip,
+                    "dport":       flow_data.get("dst_port", 0),
+                    "sni":         flow_data.get("sni", ""),
+                    "explanation": finger_result.explanation,
+                    "mitre_ttps":  finger_result.mitre_ttps,
+                    "shap_values": {"threat_name": finger_result.threat_name,
+                                    "ja3_hash": flow_data.get("ja3", flow_data.get("ja3_hash", ""))},
+                    "sub_scores":  {"tls_fingerprint_confidence": finger_result.confidence},
+                })
+                _redis_incr_stat("stats:c2_count")
+                if finger_result.threat_name == "blacklisted_tls_client":
+                    _redis_incr_stat("stats:ja3_matches")
+        except Exception as e:
+            log.error("TLSFingerprintDetector error", exc=e)
+
+    # 3f: TLS Certificate Anomaly
+    if tls_cert_detector is not None:
+        try:
+            cert_result = tls_cert_detector.check(flow_data)
+            if cert_result and cert_result.is_threat:
+                rule_alerts.append({
+                    "flow_id":     flow_id,
+                    "timestamp":   datetime.utcnow(),
+                    "threat_type": "c2_beacon",
+                    "severity":    cert_result.severity,
+                    "confidence":  cert_result.confidence,
+                    "src":         src_ip,
+                    "dst":         dst_ip,
+                    "dport":       flow_data.get("dst_port", 0),
+                    "sni":         flow_data.get("sni", ""),
+                    "explanation": cert_result.explanation,
+                    "mitre_ttps":  cert_result.mitre_ttps,
+                    "shap_values": {"threat_name": cert_result.threat_name,
+                                    "cert_validity_days": flow_data.get("cert_validity_days", 0.0),
+                                    "cert_self_signed": flow_data.get("cert_self_signed", False)},
+                    "sub_scores":  {"tls_cert_confidence": cert_result.confidence},
+                })
+                _redis_incr_stat("stats:c2_count")
+        except Exception as e:
+            log.error("TLSCertDetector error", exc=e)
+
+    # 3g: Jitter C2 Beaconing
+    if jitter_c2_detector is not None:
+        try:
+            flow_history = cache.get_flow_history(src_ip)
+            if flow_history and len(flow_history) >= 2:
+                sorted_history = sorted(flow_history, key=lambda x: x.get("timestamp", 0.0))
+                intervals = [sorted_history[i]["timestamp"] - sorted_history[i-1]["timestamp"] for i in range(1, len(sorted_history))]
+                packet_sizes = [int(x.get("total_bytes", 0)) for x in sorted_history]
+                
+                jitter_result = jitter_c2_detector.check_sequence(intervals, packet_sizes)
+                if jitter_result and jitter_result.is_beacon:
+                    rule_alerts.append({
+                        "flow_id":     flow_id,
+                        "timestamp":   datetime.utcnow(),
+                        "threat_type": "c2_beacon",
+                        "severity":    jitter_result.severity,
+                        "confidence":  jitter_result.confidence,
+                        "src":         src_ip,
+                        "dst":         dst_ip,
+                        "dport":       flow_data.get("dst_port", 0),
+                        "sni":         flow_data.get("sni", ""),
+                        "explanation": jitter_result.explanation,
+                        "mitre_ttps":  ["T1071", "T1071.001"],
+                        "shap_values": {"estimated_jitter_pct": jitter_result.estimated_jitter,
+                                        "mean_interval_s": float(sum(intervals) / len(intervals)) if intervals else 0.0},
+                        "sub_scores":  {"jitter_confidence": jitter_result.confidence},
+                    })
+                    _redis_incr_stat("stats:c2_count")
+        except Exception as e:
+            log.error("JitterC2Detector error", exc=e)
+
+    # 3h: DoH/DoT Tunneling
+    if doh_dot_detector is not None:
+        try:
+            doh_result = doh_dot_detector.check(flow_data)
+            if doh_result and doh_result.is_threat:
+                rule_alerts.append({
+                    "flow_id":     flow_id,
+                    "timestamp":   datetime.utcnow(),
+                    "threat_type": "dns_tunnel",
+                    "severity":    doh_result.severity,
+                    "confidence":  doh_result.confidence,
+                    "src":         src_ip,
+                    "dst":         dst_ip,
+                    "dport":       flow_data.get("dst_port", 0),
+                    "sni":         flow_data.get("sni", ""),
+                    "explanation": doh_result.explanation,
+                    "mitre_ttps":  doh_result.mitre_ttps,
+                    "shap_values": {"avg_packet_size": flow_data.get("orig_bytes", 0) / max(flow_data.get("orig_pkts", 1), 1)},
+                    "sub_scores":  {"doh_dot_confidence": doh_result.confidence},
+                })
+                _redis_incr_stat("stats:dns_count")
+        except Exception as e:
+            log.error("DoHDotDetector error", exc=e)
+
+    # 3i: Shannon Entropy Exfiltration
+    if shannon_entropy_detector is not None:
+        try:
+            entropy_result = shannon_entropy_detector.check(flow_data)
+            if entropy_result and entropy_result.is_threat:
+                rule_alerts.append({
+                    "flow_id":     flow_id,
+                    "timestamp":   datetime.utcnow(),
+                    "threat_type": "exfiltration",
+                    "severity":    entropy_result.severity,
+                    "confidence":  entropy_result.confidence,
+                    "src":         src_ip,
+                    "dst":         dst_ip,
+                    "dport":       flow_data.get("dst_port", 0),
+                    "sni":         flow_data.get("sni", ""),
+                    "explanation": entropy_result.explanation,
+                    "mitre_ttps":  entropy_result.mitre_ttps,
+                    "shap_values": {"payload_entropy": flow_data.get("payload_entropy", 0.0),
+                                    "orig_bytes": flow_data.get("orig_bytes", 0)},
+                    "sub_scores":  {"entropy_confidence": entropy_result.confidence},
+                })
+                _redis_incr_stat("stats:exfil_count")
+        except Exception as e:
+            log.error("ShannonEntropyDetector error", exc=e)
 
     # ── Step 4: Collect all alerts to process ─────────────────────────────────
     all_alerts = []
