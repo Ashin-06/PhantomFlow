@@ -99,6 +99,7 @@ class FlowFeatures:
     connection_count_5m: int = 0
     unique_dst_ports_1m: int = 0      # Port scan indicator
     failed_connection_ratio: float = 0.0
+    payload_entropy: float = 0.0
 
     # --- LABEL (for training) ---
     label: int = -1                   # -1=unlabeled, 0=benign, 1=C2, 2=DNS_tunnel, 3=exfil
@@ -365,7 +366,6 @@ class FeatureExtractor:
             if hasattr(f, k):
                 setattr(f, k, v)
         
-        # TLS features
         f.ja3_hash = flow_record.get("ja3", "")
         f.ja3s_hash = flow_record.get("ja3s", "")
         f.tls_version = flow_record.get("tls_version", "")
@@ -374,6 +374,12 @@ class FeatureExtractor:
         f.tls_resumed = flow_record.get("resumed", False)
         f.sni_len = len(f.sni)
         f.sni_entropy = self._string_entropy(f.sni.split(".")[0] if f.sni else "")
+        
+        # Ingest new capture features
+        f.cert_validity_days = float(flow_record.get("cert_validity_days", 0.0) or 0.0)
+        f.cert_self_signed = bool(flow_record.get("cert_self_signed", False))
+        f.ja4_hash = flow_record.get("ja4_hash", "")
+        f.payload_entropy = float(flow_record.get("payload_entropy", 0.0) or 0.0)
         
         # JA3/JA4 malware scores
         f.ja3_malware_score, f.ja4_malware_score = self.get_ja_malware_score(
