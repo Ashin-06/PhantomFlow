@@ -27,14 +27,8 @@ if %errorlevel% equ 0 (
 
 echo   [..] Docker is not running. Attempting to launch Docker Desktop...
 start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe" 2>nul
-if %errorlevel% neq 0 (
-    echo   [!!] Could not find Docker Desktop at default path.
-    echo   [!!] Please start Docker Desktop manually and run this script again.
-    pause
-    exit /b 1
-)
 
-echo   [..] Waiting for Docker daemon to initialize (this may take 30-60 seconds)...
+echo   [..] Waiting for Docker daemon to initialize...
 set /a docker_wait=0
 :wait_docker
 timeout /t 3 /nobreak >nul
@@ -43,8 +37,7 @@ if %errorlevel% equ 0 goto docker_ready
 set /a docker_wait+=3
 if %docker_wait% gtr 90 (
     echo   [!!] Docker did not start within 90 seconds. Please start it manually.
-    pause
-    exit /b 1
+    goto fail
 )
 echo   [..] Still waiting... (%docker_wait%s elapsed)
 goto wait_docker
@@ -60,12 +53,11 @@ echo [2/5] Starting infrastructure containers (PostgreSQL, Redis, Kafka, Prometh
 docker compose -f docker/docker-compose.yml up -d
 if %errorlevel% neq 0 (
     echo   [!!] Docker Compose failed. Check docker/docker-compose.yml for errors.
-    pause
-    exit /b 1
+    goto fail
 )
 echo   [OK] All containers started.
 
-:: Wait a moment for PostgreSQL and Redis to fully initialize
+:: Wait for PostgreSQL and Redis to be ready
 echo   [..] Waiting 8 seconds for databases to initialize...
 timeout /t 8 /nobreak >nul
 
@@ -74,22 +66,16 @@ timeout /t 8 /nobreak >nul
 :: ────────────────────────────────────────────────────────────────
 echo.
 echo [3/5] Initializing database schema...
-python scratch/init_db.py
-if %errorlevel% neq 0 (
-    echo   [WARN] Database schema init returned an error (tables may already exist - this is OK).
-)
-echo   [OK] Database schema ready.
+call python scratch/init_db.py
+echo   [OK] Database schema step completed (errorlevel: %errorlevel%).
 
 :: ────────────────────────────────────────────────────────────────
 :: STEP 4: Clean Slate (Reset Counters)
 :: ────────────────────────────────────────────────────────────────
 echo.
 echo [4/5] Resetting databases to clean slate...
-python "%~dp0..\clear_db.py"
-if %errorlevel% neq 0 (
-    echo   [WARN] Clean slate script returned an error (non-critical).
-)
-echo   [OK] Databases reset.
+call python "%~dp0..\clear_db.py"
+echo   [OK] Database reset step completed.
 
 :: ────────────────────────────────────────────────────────────────
 :: STEP 5: Launch PhantomFlow Services
@@ -106,8 +92,17 @@ echo.
 echo   Press Ctrl+C to stop all services.
 echo.
 
-python start_all.py
+call python start_all.py
+goto end
 
+:fail
+echo.
+echo  ============================================================
+echo   [!!] PhantomFlow failed to start. See errors above.
+echo  ============================================================
+
+:end
 echo.
 echo [*] PhantomFlow has stopped.
+echo.
 pause

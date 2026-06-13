@@ -43,7 +43,7 @@ timeout /t 5 /nobreak >nul
 :: ────────────────────────────────────────────────────────────────
 echo.
 echo [2/3] Ensuring database schema is ready...
-python scratch/init_db.py >nul 2>&1
+call python scratch/init_db.py >nul 2>&1
 echo   [OK] Database schema verified.
 
 :: ────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ echo.
 echo   Press Ctrl+C to stop the server.
 echo.
 
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+call python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 echo.
 echo [*] PhantomFlow dashboard server has stopped.
