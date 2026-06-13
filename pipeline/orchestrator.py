@@ -160,7 +160,7 @@ def start_health_server():
         server = HTTPServer(("0.0.0.0", 8080), HealthCheckHandler)
         server.serve_forever()
     except Exception as e:
-        log.warning("Failed to start health check server", error=e)
+        log.warning("Failed to start health check server", error=str(e))
 
 async def redis_suppression_listener(suppression_engine: SuppressionEngine):
     """Listens for rule modifications in Redis and reloads suppression rules."""
@@ -712,7 +712,7 @@ async def _process_flow(
                 except Exception as e:
                     log.error("Redis pubsub broadcast failed", exc=e)
         except Exception as e:
-            log.error("Failed to save flow/alert to DB", exc=e)
+            log.error("Failed to save flow/alert to DB", exc=str(e), flow_id=flow_id)
             continue
 
         # SIEM export
