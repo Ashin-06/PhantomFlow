@@ -48,34 +48,40 @@ class SuppressionEngine:
 
             # IP CIDR matches
             try:
-                src_ip = ipaddress.ip_address(flow.get("src") or "0.0.0.0")
+                src_ip = ipaddress.ip_address(flow.get("src") or "")
             except ValueError:
                 src_ip = None
 
             if rule.get("src_ip_cidr"):
                 if src_ip is None:
                     continue
-                subnet = ipaddress.ip_network(rule["src_ip_cidr"])
+                try:
+                    subnet = ipaddress.ip_network(rule["src_ip_cidr"])
+                except ValueError:
+                    continue
                 if src_ip not in subnet:
                     continue
                     
             try:
-                dst_ip = ipaddress.ip_address(flow.get("dst") or "0.0.0.0")
+                dst_ip = ipaddress.ip_address(flow.get("dst") or "")
             except ValueError:
                 dst_ip = None
 
             if rule.get("dst_ip_cidr"):
                 if dst_ip is None:
                     continue
-                subnet = ipaddress.ip_network(rule["dst_ip_cidr"])
+                try:
+                    subnet = ipaddress.ip_network(rule["dst_ip_cidr"])
+                except ValueError:
+                    continue
                 if dst_ip not in subnet:
                     continue
 
             # SNI Regex match
             if rule.get("sni_pattern"):
                 regex = self._compiled_regex.get(rule["rule_id"])
-                sni = flow.get("sni", "")
-                if regex and not regex.search(sni):
+                sni = flow.get("sni") or ""
+                if regex is None or not regex.search(sni):
                     continue
 
             # If we get here, all specified conditions matched

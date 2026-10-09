@@ -42,8 +42,8 @@ Network Interface (Zeek/Suricata)
 
 ### 1. Clone and install
 ```bash
-git clone <repo-url>
-cd PhantomFlow/phantomflow
+git clone https://github.com/Ashin-06/PhantomFlow.git
+cd PhantomFlow
 
 cp .env.example .env
 # Edit .env with your credentials
@@ -55,11 +55,13 @@ pip install -r requirements.txt
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 # Starts: Kafka, Redis, PostgreSQL
+# This Compose file exposes PostgreSQL on port 5433.
+# Set PG_PORT=5433 and align .env passwords with the Compose configuration.
 ```
 
 ### 3. Initialize the database
 ```bash
-psql -h localhost -U phantom -d phantomflow -f pipeline/schema.sql
+psql -h localhost -p 5433 -U phantom -d phantomflow -f pipeline/schema.sql
 ```
 
 ### 4. Train the models (streaming — no full download needed)
@@ -185,3 +187,40 @@ phantomflow/
 - **Concept Drift Detection**: ADWIN + KS-test detect when distribution shifts
 - **Cross-Dataset Validation**: Model must generalize from CICIDS → CTU-13, not just memorize
 - **Temporal Validation**: Time-based splits prevent data leakage in all evaluations
+
+## Audited API and dashboard setup
+
+The API no longer accepts the `demo` token. Configure a random `JWT_SECRET`
+(at least 32 characters; do not use the example placeholder) or provide matching
+`JWT_PUBLIC_KEY` and `JWT_PRIVATE_KEY` PEM strings. Signing and verification
+use RS256 when a public key is configured, otherwise HS256.
+
+For a local-only development session, explicitly set `ENV=dev` and
+`ALLOW_DEV_LOGIN=true`. Sign in with a nonempty username and password `dev`.
+This creates an **analyst** session. Training and database reset require an
+administrator. Production login uses configured Active Directory groups.
+
+For API/dashboard development without the ML/capture packages:
+
+```sh
+pip install -r requirements-api.txt
+python -m pytest -q
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+`/health` checks the API process; `/ready` checks PostgreSQL and Redis and returns
+503 when either is unavailable. Start services before the API; restart the API
+after restoring a database that was unavailable at startup. The Redis alert
+subscription reconnects automatically. The dashboard reports outages and retains
+last-known data; it does not substitute synthetic detections or training results.
+**Export alerts** downloads the currently loaded feed (up to 50 alerts), not the
+entire database. **Sign out** clears the session from the current browser tab.
+
+WebSocket clients must send `{"token":"<access_token>"}` as their first message
+within five seconds. Unauthenticated and expired sessions are closed.
+
+Response actions can be queued for review. Execution/approval returns 501 until
+an enforcement provider is wired into these API routes; no firewall block is
+claimed or performed by this dashboard path.
+
+See [audit notes](docs/audit-2026-10-09.md) for verification and remaining limits.

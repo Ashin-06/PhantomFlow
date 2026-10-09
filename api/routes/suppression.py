@@ -49,8 +49,7 @@ def clean_cidr(ip_str: Optional[str]) -> Optional[str]:
             ip = ipaddress.ip_address(ip_str)
             return f"{ip_str}/32" if ip.version == 4 else f"{ip_str}/128"
         # Validate CIDR
-        ipaddress.ip_network(ip_str, strict=False)
-        return ip_str
+        return str(ipaddress.ip_network(ip_str, strict=False))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid IP or CIDR block: {e}")
 

@@ -34,8 +34,6 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     if credentials is None:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
     token = credentials.credentials
-    if token == "demo":
-        return {"sub": "demo_user", "roles": ["analyst", "admin", "tier3"]}
     try:
         jwt_config = secrets.get_secret("phantomflow/jwt")
         public_key = jwt_config.get("public_key") if jwt_config else None
@@ -43,11 +41,15 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
         if not public_key:
             # Dev fallback: HS256 with env secret
             import os
-            dev_secret = os.getenv("JWT_SECRET", "dev_secret_do_not_use_in_prod")
-            payload = jwt.decode(token, dev_secret, algorithms=["HS256"])
+            dev_secret = os.getenv("JWT_SECRET", "")
+            if len(dev_secret) < 32 or dev_secret.startswith("dev_secret"):
+                raise HTTPException(503, "Configure a random JWT_SECRET of at least 32 characters")
+            payload = jwt.decode(token, dev_secret, algorithms=["HS256"], options={"require_exp": True, "require_sub": True})
         else:
-            payload = jwt.decode(token, public_key, algorithms=["RS256"])
+            payload = jwt.decode(token, public_key, algorithms=["RS256"], options={"require_exp": True, "require_sub": True})
 
+        if not payload.get("sub") or not isinstance(payload.get("roles"), list):
+            raise JWTError("Invalid identity claims")
         return payload
     except JWTError as e:
         log.warning(f"Invalid token: {e}")
@@ -73,18 +75,18 @@ def login(req: LoginRequest):
 
     if not roles:
         # Dev-mode fallback: accept 'dev' password
-        if os.getenv("ENV", "dev") == "dev" and req.password == "dev":
+        if os.getenv("ENV") == "dev" and os.getenv("ALLOW_DEV_LOGIN") == "true" and req.password == "dev" and req.username.strip():
             roles = ["analyst"]
         else:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    dev_secret = os.getenv("JWT_SECRET", "dev_secret_do_not_use_in_prod")
+    dev_secret, algorithm = signing_key()
     payload = {
         "sub":  req.username,
         "roles": roles,
-        "exp":  datetime.datetime.utcnow() + datetime.timedelta(hours=8),
+        "exp":  datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8),
     }
-    token = jwt.encode(payload, dev_secret, algorithm="HS256")
+    token = jwt.encode(payload, dev_secret, algorithm=algorithm)
     return TokenResponse(access_token=token, roles=roles)
 
 
@@ -104,19 +106,32 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
 
     if not roles:
         # Dev-mode fallback: accept 'dev' password
-        if os.getenv("ENV", "dev") == "dev" and password == "dev":
+        if os.getenv("ENV") == "dev" and os.getenv("ALLOW_DEV_LOGIN") == "true" and password == "dev" and username.strip():
             roles = ["analyst"]
         else:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    dev_secret = os.getenv("JWT_SECRET", "dev_secret_do_not_use_in_prod")
+    dev_secret, algorithm = signing_key()
     payload = {
         "sub":  username,
         "roles": roles,
-        "exp":  datetime.datetime.utcnow() + datetime.timedelta(hours=8),
+        "exp":  datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8),
     }
-    token = jwt.encode(payload, dev_secret, algorithm="HS256")
+    token = jwt.encode(payload, dev_secret, algorithm=algorithm)
     return TokenResponse(access_token=token, roles=roles)
+
+
+def signing_key():
+    import os
+    config = secrets.get_jwt_config()
+    if config.get("public_key"):
+        if not config.get("private_key"):
+            raise HTTPException(503, "JWT private key is not configured")
+        return config["private_key"], "RS256"
+    key = os.getenv("JWT_SECRET", "")
+    if len(key) < 32 or key.startswith("dev_secret"):
+        raise HTTPException(503, "Configure a random JWT_SECRET of at least 32 characters")
+    return key, "HS256"
 
 
 def require_role(required_role: str):
@@ -140,6 +155,12 @@ class ActiveDirectoryAuth:
         self.base_dn = ad_config.get("base_dn", "DC=corp,DC=local")
 
     def authenticate(self, username: str, password: str) -> list:
+        import os
+        if not username.strip() or not password:
+            return []
+        if secrets.provider == "env" and not os.getenv("AD_SERVER_URL"):
+            return []
+        conn = None
         try:
             server = ldap3.Server(self.server_url, get_info=ldap3.ALL)
             user_dn = f"{username}@{self.base_dn.replace('DC=', '').replace(',', '.')}"
@@ -147,7 +168,8 @@ class ActiveDirectoryAuth:
             conn = ldap3.Connection(server, user=user_dn, password=password, auto_bind=True)
             
             # Fetch groups
-            conn.search(self.base_dn, f"(&(objectClass=user)(sAMAccountName={username}))", attributes=['memberOf'])
+            escaped = ldap3.utils.conv.escape_filter_chars(username)
+            conn.search(self.base_dn, f"(&(objectClass=user)(sAMAccountName={escaped}))", attributes=['memberOf'])
             
             if not conn.entries:
                 return []
@@ -166,3 +188,6 @@ class ActiveDirectoryAuth:
         except Exception as e:
             log.error(f"AD Auth failed for {username}: {e}")
             return []
+        finally:
+            if conn is not None:
+                conn.unbind()

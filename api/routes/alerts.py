@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from typing import Optional, List
 from api.models import PhantomFlowAlert, AlertListResponse, ThreatType, Severity
 import json
+from api.auth import require_role
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 
@@ -108,7 +109,7 @@ async def list_alerts(
     return AlertListResponse(alerts=alerts, total=total)
 
 
-@router.post("/reset")
+@router.post("/reset", dependencies=[Depends(require_role("admin"))])
 async def reset_database(request: Request):
     """Clear database and flush Redis cache (Clean Slate)."""
     db = get_db(request)

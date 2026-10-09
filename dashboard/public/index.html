@@ -651,6 +651,15 @@ tr:hover td{background:var(--bg2)}
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(74,158,255,0.2);
 }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--teal); outline-offset: 3px;
+}
+.header { height: auto; min-height: 64px; flex-wrap: wrap; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+.header-right { flex-wrap: wrap; gap: 10px; }
+@media (max-width: 900px) {
+  .header-right { justify-content: flex-start; }
+  .login-box { width: min(400px, 92vw); }
+}
 </style>
 </head>
 <body>
@@ -668,11 +677,11 @@ tr:hover td{background:var(--bg2)}
     <div class="login-title">PHANTOMFLOW</div>
     <div class="login-sub">Encrypted Traffic Threat Detection v2.0</div>
     <form id="login-form" onsubmit="handleLogin(event)">
-      <input type="text" id="username" class="login-input" placeholder="Username" autocomplete="off">
-      <input type="password" id="password" class="login-input" placeholder="Password" autocomplete="off">
+      <input type="text" id="username" class="login-input" placeholder="Username" aria-label="Username" autocomplete="username" required>
+      <input type="password" id="password" class="login-input" placeholder="Password" aria-label="Password" autocomplete="current-password" required>
       <button type="submit" class="login-btn" id="login-submit-btn">AUTHENTICATE</button>
-      <button type="button" class="login-btn demo" onclick="bypassLogin()">BYPASS / DEMO MODE</button>
-      <div id="login-error" class="login-error">Invalid credentials — try demo mode</div>
+
+      <div id="login-error" class="login-error" role="alert">Sign-in failed. Check your credentials and server configuration.</div>
     </form>
   </div>
 </div>
@@ -695,8 +704,10 @@ tr:hover td{background:var(--bg2)}
   <div class="header-right">
     <a href="/dashboard/guide.html" target="_blank" class="triage-btn tp" style="padding:4px 8px;font-size:9px;background:rgba(0,212,170,0.15);color:var(--teal);border:1px solid rgba(0,212,170,0.3);font-family:var(--font-mono);text-decoration:none;display:inline-block;cursor:pointer;margin-right:4px;">📖 User Guide</a>
     <button class="triage-btn fp" style="padding:4px 8px;font-size:9px;background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);font-family:var(--font-mono);cursor:pointer;" onclick="resetSuite()">⚠️ Reset Suite</button>
-    <div class="header-model-badge">● MODEL ONLINE</div>
-    <div class="live-badge">● LIVE</div>
+    <div class="header-model-badge">MODEL STATUS UNVERIFIED</div>
+    <div class="live-badge" id="connection-status" role="status" aria-live="polite">● CONNECTING</div>
+    <button class="tab-btn" onclick="exportAlerts()" title="Download the current alert feed as JSON">Export alerts</button>
+    <button class="tab-btn" onclick="signOut()">Sign out</button>
     <div class="flow-rate"><div class="rate-dot"></div><span id="flow-rate-val">0 flows/sec</span></div>
     <div class="clock" id="clock">--:--:--</div>
   </div>
@@ -1075,57 +1086,64 @@ tr:hover td{background:var(--bg2)}
 
 <script>
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-let authToken = localStorage.getItem('phantom_token') || '';
+localStorage.removeItem('phantom_token');
+let authToken = sessionStorage.getItem('phantom_token') || '';
 
 const originalFetch = window.fetch;
 window.fetch = async function(resource, config = {}) {
-  if (!config) config = {};
-  if (config.headers) {
-    if (config.headers instanceof Headers) {
-      if (authToken) {
-        config.headers.set('Authorization', 'Bearer ' + authToken);
-      }
-    } else if (Array.isArray(config.headers)) {
-      let hasAuth = false;
-      for (let i = 0; i < config.headers.length; i++) {
-        if (config.headers[i][0].toLowerCase() === 'authorization') {
-          hasAuth = true;
-          if (authToken) {
-            config.headers[i][1] = 'Bearer ' + authToken;
-          }
-        }
-      }
-      if (!hasAuth && authToken) {
-        config.headers.push(['Authorization', 'Bearer ' + authToken]);
-      }
-    } else if (typeof config.headers === 'object') {
-      if (authToken) {
-        config.headers['Authorization'] = 'Bearer ' + authToken;
-      }
-    }
-  } else {
-    config.headers = {};
-    if (authToken) {
-      config.headers['Authorization'] = 'Bearer ' + authToken;
-    }
-  }
-  const res = await originalFetch(resource, config);
-  if (res.status === 401) {
-    localStorage.removeItem('phantom_token');
+  const url = new URL(resource instanceof Request ? resource.url : resource, location.href);
+  const isAPI = url.origin === location.origin && url.pathname.startsWith('/api/');
+  const headers = new Headers(config.headers || (resource instanceof Request ? resource.headers : undefined));
+  if (isAPI && authToken) headers.set('Authorization', 'Bearer ' + authToken);
+  const res = await originalFetch(resource, {...config, headers});
+  if (isAPI && res.status === 401) {
+    sessionStorage.removeItem('phantom_token');
     authToken = '';
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-      loginModal.style.display = 'flex';
-    }
+    document.getElementById('login-modal').style.display = 'flex';
+    setConnectionStatus('SIGN IN REQUIRED');
   }
   return res;
 };
+
+function signOut() {
+  sessionStorage.removeItem('phantom_token');
+  authToken = '';
+  if (ws) ws.close();
+  location.reload();
+}
+
+function setConnectionStatus(message) {
+  document.getElementById('connection-status').textContent = '● ' + message;
+}
+
+async function checkReadiness() {
+  try {
+    const response = await fetch('/ready');
+    const state = await response.json();
+    const unavailable = Object.entries(state.services || {}).filter(([, ready]) => !ready).map(([name]) => name);
+    setConnectionStatus(response.ok ? 'SERVICES READY' : 'UNAVAILABLE: ' + unavailable.join(', ').toUpperCase());
+  } catch {
+    setConnectionStatus('OFFLINE — RETRYING');
+  }
+}
+
+function exportAlerts() {
+  const blob = new Blob([JSON.stringify({exported_at: new Date().toISOString(), alerts: liveAlerts}, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'phantomflow-alerts-' + new Date().toISOString().slice(0, 10) + '.json';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 async function handleLogin(e) {
   e.preventDefault();
   const u = document.getElementById('username').value;
   const p = document.getElementById('password').value;
   const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true;
+  document.getElementById('login-error').style.display = 'none';
   btn.textContent = 'AUTHENTICATING...';
   try {
     const form = new URLSearchParams();
@@ -1134,21 +1152,15 @@ async function handleLogin(e) {
     if(res.ok) {
       const data = await res.json();
       authToken = data.access_token;
-      localStorage.setItem('phantom_token', authToken);
+      sessionStorage.setItem('phantom_token', authToken);
       document.getElementById('login-modal').style.display = 'none';
       init();
     } else {
       document.getElementById('login-error').style.display = 'block';
     }
   } catch { document.getElementById('login-error').style.display = 'block'; }
+  btn.disabled = false;
   btn.textContent = 'AUTHENTICATE';
-}
-
-function bypassLogin() {
-  authToken = 'demo';
-  localStorage.setItem('phantom_token', authToken);
-  document.getElementById('login-modal').style.display = 'none';
-  init();
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1251,7 +1263,12 @@ let searchFlowQuery = '';
 let isTabActive = true;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+let initialized = false;
 function init() {
+  if (initialized) { connectWebSocket(); refreshSOC(); return; }
+  initialized = true;
+  checkReadiness();
+  setInterval(checkReadiness, 10000);
   updateClock();
   setInterval(updateClock, 1000);
   setInterval(tickFlowRate, 2600);
@@ -1273,7 +1290,7 @@ function init() {
       // Immediately calculate the correct count and update the DOM
       const elapsedMs = Date.now() - lastServerFetchTime;
       if (currentFlowRate > 0) {
-        flowsAnalyzedCounter = serverFlows + (currentFlowRate * elapsedMs) / 1000;
+        flowsAnalyzedCounter = serverFlows;
       } else {
         flowsAnalyzedCounter = serverFlows;
       }
@@ -1371,8 +1388,7 @@ async function fetchAlerts() {
       startMapAnimation();
     }
   } catch(e) {
-    // Demo mode: use hardcoded sample if API unavailable
-    if(liveAlerts.length === 0) seedDemoAlerts();
+    setConnectionStatus('ALERTS UNAVAILABLE — RETRYING');
   }
 }
 
@@ -1385,9 +1401,8 @@ async function fetchStats() {
     updateCharts();
     updateFeedbackIndicator();
   } catch(e) {
-    // Demo fallback
-    if(!statsData.threat_counts) seedDemoStats();
-    else updateMetrics();
+    currentFlowRate = 0;
+    setConnectionStatus('TELEMETRY STALE — RETRYING');
   }
 }
 
@@ -2491,10 +2506,11 @@ async function startTraining() {
   try {
     const res = await fetch('/api/train/run', {method:'POST'});
     const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Training request failed');
     appendLog(data.message || 'Training initiated.', 'var(--teal)');
     document.getElementById('train-status-badge').textContent = 'training';
     document.getElementById('train-status-badge').className = 'badge badge-red';
-  } catch(e) { appendLog('Failed to connect to training API.', 'var(--red)'); }
+  } catch(e) { appendLog(e.message || 'Failed to connect to training API.', 'var(--red)'); return; }
 
   if(trainingPollTimer) clearInterval(trainingPollTimer);
   displayedLogCount = 0; displayedDriftCount = 0;
@@ -2632,6 +2648,7 @@ function seedDemoStats() {
 // ─── WebSocket connection ──────────────────────────────────────────────────────
 let ws = null;
 function connectWebSocket() {
+  if (!authToken || (ws && ws.readyState < 2)) return;
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
   const wsUrl = `${protocol}//${host}/api/ws/alerts`;
@@ -2639,7 +2656,7 @@ function connectWebSocket() {
   ws = new WebSocket(wsUrl);
   
   ws.onopen = function() {
-    console.log('[WS] Connected to alerts feed');
+    ws.send(JSON.stringify({token: authToken}));
   };
   
   ws.onmessage = function(event) {
@@ -2665,7 +2682,13 @@ function connectWebSocket() {
     }
   };
   
-  ws.onclose = function() {
+  ws.onclose = function(event) {
+    if (event.code === 1008) {
+      sessionStorage.removeItem('phantom_token');
+      authToken = '';
+      document.getElementById('login-modal').style.display = 'flex';
+      return;
+    }
     console.log('[WS] Connection closed, retrying in 3s...');
     setTimeout(connectWebSocket, 3000);
   };
@@ -2681,7 +2704,7 @@ function startFlowsCounter() {
     if (serverFlows >= 0) {
       const elapsedMs = Date.now() - lastServerFetchTime;
       if (currentFlowRate > 0) {
-        flowsAnalyzedCounter = serverFlows + (currentFlowRate * elapsedMs) / 1000;
+        flowsAnalyzedCounter = serverFlows;
       } else {
         flowsAnalyzedCounter = serverFlows;
       }

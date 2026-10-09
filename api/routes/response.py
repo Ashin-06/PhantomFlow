@@ -3,10 +3,11 @@
 Active Response API routes.
 Allows analysts to queue and execute firewall blocks, DNS sinkholes, or host isolations.
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import Literal
 import logging
+from api.auth import require_role
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/response", tags=["response"])
@@ -42,11 +43,12 @@ async def queue_response(alert_id: str, body: RespondRequest, request: Request):
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
 
-    # Safety gate: auto-execute only if confidence >= 0.90
-    can_auto = alert["confidence"] >= 0.90 and body.auto_execute
+    # This API has no wired enforcement provider; never report mock execution.
+    if body.auto_execute:
+        raise HTTPException(501, "Response execution provider is not configured; queue for review instead")
 
     target = body.target or str(alert["dst_ip"] or "")
-    status = "executed" if can_auto else "pending"
+    status = "pending"
 
     import ipaddress
     target_ip = None
@@ -69,7 +71,7 @@ async def queue_response(alert_id: str, body: RespondRequest, request: Request):
                 ON CONFLICT DO NOTHING
             """,
                 alert_id, body.action, target_ip, target_domain, status,
-                "SYSTEM_AUTO" if can_auto else None
+                None
             )
             # Also update alert status to confirmed_tp since response action is taken
             await conn.execute("""
@@ -79,20 +81,9 @@ async def queue_response(alert_id: str, body: RespondRequest, request: Request):
             """, alert_id)
     except Exception as e:
         log.error(f"[Response] DB insert/update failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Unable to queue response action")
 
-    if can_auto:
-        # Mock execution — in production this calls Palo Alto / Cloudflare API
-        log.warning(f"[FIREWALL] AUTO-BLOCK: {body.action} on {target} (alert {alert_id[:8]})")
-        async with db.pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE response_audit SET status='executed', executed_at=NOW() WHERE alert_id=$1::uuid AND action=$2",
-                alert_id, body.action
-            )
-        status = "executed"
-        message = f"Action '{body.action}' executed on {target}"
-    else:
-        message = f"Action '{body.action}' queued for analyst approval (target: {target})"
+    message = f"Action '{body.action}' queued for review; no network change has been made (target: {target})"
 
     return RespondResponse(
         alert_id=alert_id,
@@ -117,23 +108,7 @@ async def list_response_queue(request: Request):
              "executed_at": r["executed_at"].isoformat() if r.get("executed_at") else None}
             for r in rows]
 
-@router.patch("/queue/{audit_id}/approve")
+@router.patch("/queue/{audit_id}/approve", dependencies=[Depends(require_role("tier3"))])
 async def approve_action(audit_id: str, request: Request):
-    """Analyst approves a pending response action — executes it."""
-    db = request.app.state.db
-    async with db.pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT * FROM response_audit WHERE audit_id=$1::uuid AND status='pending'",
-            audit_id
-        )
-        if not row:
-            raise HTTPException(status_code=404, detail="Pending action not found")
-        target = str(row["target_ip"]) if row["target_ip"] else row["target_domain"]
-        action = row["action"]
-        # Mock firewall call
-        log.warning(f"[FIREWALL] ANALYST-APPROVED: {action} on {target}")
-        await conn.execute(
-            "UPDATE response_audit SET status='executed', executed_at=NOW(), approved_by='analyst' WHERE audit_id=$1::uuid",
-            audit_id
-        )
-    return {"status": "executed", "action": action, "target": target}
+    """Fail explicitly until an enforcement provider is connected."""
+    raise HTTPException(501, "Response execution provider is not configured; no action was executed")
