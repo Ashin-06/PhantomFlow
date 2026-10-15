@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import ldap3
+from ldap3.utils.dn import parse_dn
 from config.secrets import SecretsManager
 import logging
 
@@ -179,9 +180,16 @@ class ActiveDirectoryAuth:
             # Map AD Groups to App Roles
             roles = ["analyst"] # Default
             for group in groups:
-                if "PhantomFlow_Admins" in str(group):
+                try:
+                    rdn = parse_dn(str(group))
+                except ldap3.core.exceptions.LDAPInvalidDnError:
+                    continue
+                if not rdn or rdn[0][0].casefold() != "cn":
+                    continue
+                name = rdn[0][1].casefold()
+                if name == "phantomflow_admins":
                     roles.append("admin")
-                if "SOC_Tier3" in str(group):
+                if name == "soc_tier3":
                     roles.append("tier3")
             return roles
             
