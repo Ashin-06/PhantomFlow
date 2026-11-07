@@ -41,7 +41,7 @@ fastapi
 uvicorn[standard]
 pydantic
 websockets
-python-jose[cryptography]  # RS256 JWT (replaces PyJWT for RS256 support)
+PyJWT[crypto]>=2.10,<3  # RS256 JWT
 passlib[bcrypt]
 python-multipart
 httpx                    # Async HTTP for active response integrations

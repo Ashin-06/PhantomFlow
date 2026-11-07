@@ -3,7 +3,8 @@
 Enterprise Authentication & RBAC using RS256 JWTs and LDAP/AD Integration.
 """
 
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError
 from fastapi import APIRouter, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -44,9 +45,9 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
             dev_secret = os.getenv("JWT_SECRET", "")
             if len(dev_secret) < 32 or dev_secret.startswith("dev_secret"):
                 raise HTTPException(503, "Configure a random JWT_SECRET of at least 32 characters")
-            payload = jwt.decode(token, dev_secret, algorithms=["HS256"], options={"require_exp": True, "require_sub": True})
+            payload = jwt.decode(token, dev_secret, algorithms=["HS256"], options={"require": ["exp", "sub"]})
         else:
-            payload = jwt.decode(token, public_key, algorithms=["RS256"], options={"require_exp": True, "require_sub": True})
+            payload = jwt.decode(token, public_key, algorithms=["RS256"], options={"require": ["exp", "sub"]})
 
         if not payload.get("sub") or not isinstance(payload.get("roles"), list):
             raise JWTError("Invalid identity claims")

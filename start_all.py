@@ -13,34 +13,12 @@ import os
 
 processes = []
 
-def kill_process_on_port(port):
-    """Scan and kill any process currently listening on the specified port (Windows specific)."""
-    try:
-        # Run netstat to find listening process on this port
-        output = subprocess.check_output(
-            f"netstat -ano | findstr LISTENING | findstr :{port}", 
-            shell=True
-        ).decode()
-        
-        pids_killed = set()
-        for line in output.strip().split("\n"):
-            parts = line.strip().split()
-            if len(parts) >= 5:
-                pid = parts[-1]
-                if pid not in pids_killed and pid != "0":
-                    print(f"[System] Port {port} is in use by PID {pid}. Terminating process...")
-                    subprocess.run(
-                        f"taskkill /PID {pid} /F", 
-                        shell=True, 
-                        stdout=subprocess.DEVNULL, 
-                        stderr=subprocess.DEVNULL
-                    )
-                    pids_killed.add(pid)
-        if pids_killed:
-            time.sleep(1.5)  # Give OS a moment to free the socket
-    except Exception:
-        # Will raise exception if netstat returns no lines, which is normal when port is free
-        pass
+def ensure_port_free(port):
+    """Stop with a clear message rather than closing whatever else is using the port."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1.0)
+        if s.connect_ex(("127.0.0.1", port)) == 0:
+            sys.exit(f"[System] Port {port} is already in use. Close that program and try again.")
 
 def wait_for_kafka(port=9092, timeout=60):
     """Wait for Kafka TCP port to be open and accepting connections."""
@@ -88,8 +66,8 @@ def main():
     print(f"[System] Using Python executable: {python_exe}")
 
     # 1. Clean up orphaned sockets on port 8000 (API) and 8080 (Orchestrator Health)
-    kill_process_on_port(8000)
-    kill_process_on_port(8080)
+    ensure_port_free(8000)
+    ensure_port_free(8080)
 
     # 2. Wait for Kafka to fully boot up in its container
     wait_for_kafka(9092)
