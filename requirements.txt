@@ -70,3 +70,4 @@ pytest-asyncio
 
 # Security / Crypto
 cryptography
+numba  # the saved models need it to load

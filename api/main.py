@@ -17,7 +17,7 @@ from api.routes import analyst
 from api.routes import response as response_router_module, triage as triage_router_module
 from api.routes import suppression as suppression_router_module
 from api.routes import flows
-from config.secrets import SecretsManager
+from config.secrets import SecretsManager, redis_options
 from pipeline.db_layer import Database
 
 secrets = SecretsManager()
@@ -29,11 +29,7 @@ DATABASE_URL = (
 db = Database(DATABASE_URL)
 
 # Redis setup (synchronous client for fast endpoints)
-redis_config = secrets.get_secret("phantomflow/redis")
-REDIS_OPTIONS = dict(host=redis_config.get("host", "localhost"),
-                     port=int(os.getenv("REDIS_PORT", "6379")),
-                     password=redis_config.get("password") or None,
-                     decode_responses=True, socket_connect_timeout=2, socket_timeout=2)
+REDIS_OPTIONS = redis_options(socket_connect_timeout=2, socket_timeout=2)
 redis_client = redis.Redis(**REDIS_OPTIONS)
 
 # ── WebSocket Manager ────────────────────────────────────────────────────────

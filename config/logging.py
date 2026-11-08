@@ -39,7 +39,7 @@ class StructuredLogger:
         }
         # Remove None values
         record = {k: v for k, v in record.items() if v is not None}
-        print(json.dumps(record), flush=True)
+        print(json.dumps(record, default=str), flush=True)  # exceptions and other objects become text
 
     def info(self, msg: str, **kwargs):
         self._emit("INFO", msg, **kwargs)

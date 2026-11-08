@@ -3,8 +3,10 @@ from fastapi import APIRouter
 from api.models import StatsResponse
 import json, time, redis
 
+from config.secrets import redis_options
+
 router = APIRouter(prefix="/api/stats", tags=["stats"])
-r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+r = redis.Redis(**redis_options())
 
 
 @router.get("", response_model=StatsResponse)

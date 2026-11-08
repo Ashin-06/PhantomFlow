@@ -10,7 +10,7 @@ from pipeline.active_response import ActiveResponseEngine
 from pipeline.siem_exporter import SIEMExporter
 from pipeline.baseline import BaselineLearner
 from pipeline.suppression import SuppressionEngine
-from config.secrets import SecretsManager
+from config.secrets import SecretsManager, redis_options
 from config.logging import StructuredLogger
 
 log = StructuredLogger("pipeline.orchestrator")
@@ -33,10 +33,7 @@ baseline = BaselineLearner()
 # ── Redis client (shared for stat counters + new detectors) ───────────────────
 import redis as redis_lib
 try:
-    _redis = redis_lib.Redis(
-        host="localhost", port=6379,
-        password="PhantomSecure2026!", decode_responses=True
-    )
+    _redis = redis_lib.Redis(**redis_options())
     _redis.ping()
 except Exception:
     _redis = None
@@ -167,10 +164,7 @@ async def redis_suppression_listener(suppression_engine: SuppressionEngine):
     if _redis:
         try:
             import redis.asyncio as async_redis
-            r_async = async_redis.Redis(
-                host="localhost", port=6379,
-                password="PhantomSecure2026!", decode_responses=True
-            )
+            r_async = async_redis.Redis(**redis_options())
             pubsub = r_async.pubsub()
             await pubsub.subscribe("suppression:reload")
             log.info("Orchestrator subscribed to suppression:reload channel")
@@ -225,8 +219,8 @@ async def run_pipeline():
     try:
         from aiokafka import AIOKafkaConsumer
         consumer = AIOKafkaConsumer(
-            "network-flows",
-            bootstrap_servers="localhost:9092",
+            os.getenv("KAFKA_TOPIC", "network-flows"),
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
             group_id="phantomflow-ml-group",
             value_deserializer=lambda x: json.loads(x.decode("utf-8")),
             auto_offset_reset="latest",

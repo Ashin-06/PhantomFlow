@@ -1,13 +1,15 @@
 import json
 import redis
+
+from config.secrets import redis_options
 import logging
 
 logger = logging.getLogger("PhantomFlow-Baseline")
 
 class BaselineLearner:
     """Tracks traffic patterns to learn what is 'normal' for each IP."""
-    def __init__(self, host="localhost", port=6379, password="PhantomSecure2026!"):
-        self.r = redis.Redis(host=host, port=port, password=password, decode_responses=True)
+    def __init__(self, **options):
+        self.r = redis.Redis(**(options or redis_options()))
 
     def observe(self, src_ip: str, bytes_out: int):
         """Record traffic stats during learning mode."""

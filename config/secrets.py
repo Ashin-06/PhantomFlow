@@ -122,3 +122,9 @@ class SecretsManager:
 
     def get_api_keys(self) -> dict:
         return self.get_secret("phantomflow/threat_intel_keys")
+
+def redis_options(**extra) -> dict:
+    """One place for Redis connection settings: REDIS_HOST, REDIS_PORT and REDIS_PASSWORD, or the secrets provider."""
+    cfg = SecretsManager().get_secret("phantomflow/redis") or {}
+    return dict(host=cfg.get("host", "localhost"), port=int(os.getenv("REDIS_PORT", "6379")),
+                password=cfg.get("password") or None, decode_responses=True, **extra)

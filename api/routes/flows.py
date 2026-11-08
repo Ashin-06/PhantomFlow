@@ -3,11 +3,13 @@ from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from api.models import FlowDetailResponse
 import json
 import redis
+
+from config.secrets import redis_options
 import random
 import time
 
 router = APIRouter(prefix="/api/flows", tags=["flows"])
-r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+r = redis.Redis(**redis_options())
 
 
 @router.get("")
