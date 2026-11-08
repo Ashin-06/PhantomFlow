@@ -37,6 +37,7 @@ services:
       - "127.0.0.1:5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ../pipeline/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro   # creates the tables on first start
     restart: unless-stopped
 
   prometheus:

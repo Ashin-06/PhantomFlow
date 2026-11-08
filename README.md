@@ -55,11 +55,11 @@ pip install -r requirements.txt
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 # Starts: Kafka, Redis, PostgreSQL
-# This Compose file exposes PostgreSQL on port 5433.
-# Set PG_PORT=5433 and align .env passwords with the Compose configuration.
+# This Compose file exposes PostgreSQL on port 5433; .env.example already matches it.
 ```
 
 ### 3. Initialize the database
+The Compose Postgres creates the tables from `pipeline/schema.sql` the first time it starts. For a database that already existed, load the schema yourself:
 ```bash
 psql -h localhost -p 5433 -U phantom -d phantomflow -f pipeline/schema.sql
 ```
