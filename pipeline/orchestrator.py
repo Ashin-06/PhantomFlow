@@ -220,7 +220,7 @@ async def run_pipeline():
         from aiokafka import AIOKafkaConsumer
         consumer = AIOKafkaConsumer(
             os.getenv("KAFKA_TOPIC", "network-flows"),
-            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092"),
             group_id="phantomflow-ml-group",
             value_deserializer=lambda x: json.loads(x.decode("utf-8")),
             auto_offset_reset="latest",

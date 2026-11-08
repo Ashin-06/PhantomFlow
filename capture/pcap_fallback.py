@@ -1,5 +1,6 @@
 import logging
 import json
+import os
 import socket
 import uuid
 import struct
@@ -15,7 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("PhantomFlow-Windows-Capture")
 
 class FallbackCapture:
-    def __init__(self, bootstrap_servers='localhost:9092'):
+    def __init__(self, bootstrap_servers=None):
+        bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", os.getenv("KAFKA_BROKER", "127.0.0.1:9092"))
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,
             value_serializer=lambda v: json.dumps(v).encode('utf-8')

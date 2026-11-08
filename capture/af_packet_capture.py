@@ -13,7 +13,7 @@ import os
 from kafka import KafkaProducer
 
 
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
+KAFKA_BROKER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", os.getenv("KAFKA_BROKER", "127.0.0.1:9092"))
 INTERFACE = os.getenv("CAPTURE_INTERFACE", "eth0")
 
 
