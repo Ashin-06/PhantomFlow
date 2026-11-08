@@ -74,7 +74,7 @@ def main():
 
     # Define the services to start
     services = [
-        ("FastAPI Server", [python_exe, "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]),
+        ("FastAPI Server", [python_exe, "-m", "uvicorn", "api.main:app", "--host", "127.0.0.1", "--port", "8000"]),
         ("Pipeline Orchestrator", [python_exe, "-m", "pipeline.orchestrator"]),
         ("Packet Sniffer", [python_exe, "capture/pcap_fallback.py"])
     ]
