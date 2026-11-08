@@ -1085,6 +1085,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 </div>
 
 <script>
+function esc(v) { return String(v ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c])); }
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 localStorage.removeItem('phantom_token');
 let authToken = sessionStorage.getItem('phantom_token') || '';
@@ -1560,17 +1561,17 @@ function buildAlertItemHTML(a) {
   const ttps = Array.isArray(a.mitre_ttps) ? a.mitre_ttps : (a.mitre_ttps||'').split(',').filter(Boolean);
   const ttpsHTML = ttps.map(t => `<span class="mitre-badge" style="padding:1px 4px;font-size:8px;margin-right:4px;display:inline-block;" onclick="event.stopPropagation(); showMitreDetail('${t}')" title="Click: ${MITRE_DB[t]||t}">${t}</span>`).join('');
 
-  return `<div class="alert-item sev-${sev}${isSelected?' selected':''}" data-id="${a.alert_id}" id="ali-${a.alert_id}">
+  return `<div class="alert-item sev-${sev}${isSelected?' selected':''}" data-id="${esc(a.alert_id)}" id="ali-${esc(a.alert_id)}">
     <div class="alert-dot"></div>
     <div style="flex:1; min-width:0;">
       <div class="alert-type" style="color:${col}">${label}</div>
-      <div class="alert-src"><span class="ip-link" onclick="focusHostInMap('${a.src}')">${a.src||'?'}</span> → <span class="ip-link" onclick="focusHostInMap('${a.dst}')">${a.dst||'?'}</span>:${a.dport||0}</div>
-      ${a.sni?`<div class="alert-sni">${a.sni}</div>`:''}
+      <div class="alert-src"><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span> → <span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</div>
+      ${a.sni?`<div class="alert-sni">${esc(a.sni)}</div>`:''}
       ${ttpsHTML ? `<div class="alert-mitre" style="margin-top:4px;margin-bottom:2px;display:flex;flex-wrap:wrap;gap:2px;">${ttpsHTML}</div>` : ''}
       <div class="alert-triage">
-        <button class="triage-btn tp" data-id="${a.alert_id}" data-verdict="true_positive">✓ TP</button>
-        <button class="triage-btn fp" data-id="${a.alert_id}" data-verdict="false_positive">✗ FP</button>
-        <button class="triage-btn block" data-id="${a.alert_id}" data-verdict="block">🔒 Block</button>
+        <button class="triage-btn tp" data-id="${esc(a.alert_id)}" data-verdict="true_positive">✓ TP</button>
+        <button class="triage-btn fp" data-id="${esc(a.alert_id)}" data-verdict="false_positive">✗ FP</button>
+        <button class="triage-btn block" data-id="${esc(a.alert_id)}" data-verdict="block">🔒 Block</button>
       </div>
     </div>
     <div style="text-align:right;">
@@ -1635,14 +1636,14 @@ function showDetail(a) {
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Connection</div>
-      <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${a.src}')">${a.src||'?'}</span></span></div>
-      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${a.dst}')">${a.dst||'?'}</span>:${a.dport||0}</span></div>
-      ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${a.sni}</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></span></div>
+      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</span></div>
+      ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${esc(a.sni)}</span></div>`:''}
     </div>
     ${subRows ? `<div class="detail-section"><div class="detail-section-title">Detector Sub-Scores</div>${subRows}</div>` : ''}
     <div class="detail-section">
       <div class="detail-section-title">AI Explanation</div>
-      <div class="explanation-box">${a.explanation || 'No explanation available.'}</div>
+      <div class="explanation-box">${esc(a.explanation || 'No explanation available.')}</div>
     </div>
     ${shapHTML}
     <div class="detail-section">
@@ -1654,11 +1655,11 @@ function showDetail(a) {
     <div class="detail-section">
       <div class="detail-section-title">Analyst Actions</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="triage-btn tp" style="padding:6px 12px;font-size:10px" onclick="triageAlert('${a.alert_id}','true_positive')">✓ True Positive</button>
-        <button class="triage-btn fp" style="padding:6px 12px;font-size:10px" onclick="triageAlert('${a.alert_id}','false_positive')">✗ False Positive</button>
-        <button class="triage-btn block" style="padding:6px 12px;font-size:10px" onclick="respondAlert('${a.alert_id}','block_ip')">🔒 Block IP</button>
-        <button class="triage-btn" style="padding:6px 12px;font-size:10px;background:var(--purple3);color:var(--purple);border:1px solid rgba(176,107,255,.3)" onclick="respondAlert('${a.alert_id}','sinkhole_domain')">🌀 Sinkhole Domain</button>
-        <button class="triage-btn" style="padding:6px 12px;font-size:10px;background:var(--teal3);color:var(--teal);border:1px solid rgba(0,212,170,.3)" onclick="prefillSuppressionFromAlert('${a.alert_id}')">🛡️ Create Suppression Rule</button>
+        <button class="triage-btn tp" style="padding:6px 12px;font-size:10px" onclick="triageAlert('${esc(a.alert_id)}','true_positive')">✓ True Positive</button>
+        <button class="triage-btn fp" style="padding:6px 12px;font-size:10px" onclick="triageAlert('${esc(a.alert_id)}','false_positive')">✗ False Positive</button>
+        <button class="triage-btn block" style="padding:6px 12px;font-size:10px" onclick="respondAlert('${esc(a.alert_id)}','block_ip')">🔒 Block IP</button>
+        <button class="triage-btn" style="padding:6px 12px;font-size:10px;background:var(--purple3);color:var(--purple);border:1px solid rgba(176,107,255,.3)" onclick="respondAlert('${esc(a.alert_id)}','sinkhole_domain')">🌀 Sinkhole Domain</button>
+        <button class="triage-btn" style="padding:6px 12px;font-size:10px;background:var(--teal3);color:var(--teal);border:1px solid rgba(0,212,170,.3)" onclick="prefillSuppressionFromAlert('${esc(a.alert_id)}')">🛡️ Create Suppression Rule</button>
       </div>
     </div>
   `;
@@ -1798,7 +1799,7 @@ function showMitreDetail(id) {
   document.getElementById('mitre-modal-desc').textContent = detail.desc || 'See MITRE ATT&CK framework for full details on this technique.';
   
   const signals = MITRE_SIGNALS[id] || '• See MITRE ATT&CK documentation for detection guidance.';
-  document.getElementById('mitre-modal-signals').innerHTML = signals.split('\n').map(s => `<div style="margin-bottom:3px">${s}</div>`).join('');
+  document.getElementById('mitre-modal-signals').innerHTML = signals.split('\n').map(s => `<div style="margin-bottom:3px">${esc(s)}</div>`).join('');
   
   const url = detail.url || `https://attack.mitre.org/techniques/${id.replace('.', '/')}/`;
   const urlEl = document.getElementById('mitre-modal-url');
@@ -1833,7 +1834,7 @@ async function runHunt() {
     huntAlerts = (data.alerts || []).filter(a => !dst || (a.dst||'').includes(dst));
     huntRenderTable(huntAlerts);
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);font-family:var(--font-mono);padding:16px">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);font-family:var(--font-mono);padding:16px">Error: ${esc(e.message)}</td></tr>`;
   }
 }
 
@@ -1856,16 +1857,16 @@ function huntRenderTable(alerts) {
       <td style="color:${col};font-weight:600">${THREAT_LABELS[type]||type}</td>
       <td><span class="badge ${sev==='critical'?'badge-red':sev==='high'?'badge-amber':'badge-blue'}">${sev.toUpperCase()}</span></td>
       <td style="color:${conf>90?'var(--red)':conf>70?'var(--amber)':'var(--blue)'};font-weight:600">${conf}%</td>
-      <td><span class="ip-link" onclick="focusHostInMap('${a.src}')">${a.src||'?'}</span></td>
-      <td><span class="ip-link" onclick="focusHostInMap('${a.dst}')">${a.dst||'?'}</span>:${a.dport||0}</td>
-      <td style="color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.sni||'—'}</td>
+      <td><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></td>
+      <td><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</td>
+      <td style="color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.sni||'—')}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:2px">${ttpsHTML || '—'}</div></td>
       <td>
         ${a.analyst_status === 'confirmed_tp' ? '<span class="badge badge-green" style="padding:4px 8px;">✓ TP</span>' : 
           a.analyst_status === 'false_positive' ? '<span class="badge badge-red" style="padding:4px 8px;">✗ FP</span>' : 
           a.analyst_status === 'suppressed' ? '<span class="badge badge-gray" style="padding:4px 8px;">🛡️ Suppressed</span>' : 
-          `<button class="triage-btn tp" onclick="triageAlert('${a.alert_id}','true_positive')">TP</button>
-           <button class="triage-btn fp" onclick="triageAlert('${a.alert_id}','false_positive')">FP</button>`}
+          `<button class="triage-btn tp" onclick="triageAlert('${esc(a.alert_id)}','true_positive')">TP</button>
+           <button class="triage-btn fp" onclick="triageAlert('${esc(a.alert_id)}','false_positive')">FP</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -2566,7 +2567,7 @@ async function pollTraining() {
         document.getElementById('t-drift').textContent = parseInt(document.getElementById('t-drift').textContent||0)+1;
         const div = document.createElement('div');
         div.style.cssText = 'border-left:3px solid var(--red);background:var(--bg3);padding:6px 8px;margin-bottom:5px;border-radius:0 4px 4px 0';
-        div.innerHTML = `<div style="color:var(--red);font-weight:600;font-size:9px">ADWIN DRIFT</div><div style="color:var(--text2);margin-top:2px">Distribution shift at row ${ev.total_rows} — ${ev.dataset||'stream'}</div>`;
+        div.innerHTML = `<div style="color:var(--red);font-weight:600;font-size:9px">ADWIN DRIFT</div><div style="color:var(--text2);margin-top:2px">Distribution shift at row ${esc(ev.total_rows)} — ${esc(ev.dataset||'stream')}</div>`;
         tl.prepend(div);
         document.getElementById('drift-status').textContent = 'drift detected';
         document.getElementById('drift-status').className = 'badge badge-red';
@@ -2614,7 +2615,7 @@ async function loadResponseQueue() {
     animNum(document.getElementById('rq-failed'), failed);
   } catch(e) {
     showToast('Error loading queue: '+e.message,'error');
-    document.getElementById('response-queue-body').innerHTML = `<div style="text-align:center;padding:32px;color:var(--red);font-family:var(--font-mono);font-size:11px">Error: ${e.message}</div>`;
+    document.getElementById('response-queue-body').innerHTML = `<div style="text-align:center;padding:32px;color:var(--red);font-family:var(--font-mono);font-size:11px">Error: ${esc(e.message)}</div>`;
   }
 }
 
@@ -2781,9 +2782,9 @@ function generateExecutiveReport() {
         <td style="font-weight:bold">${THREAT_LABELS[type] || type}</td>
         <td><span class="badge badge-${sev}">${sev.toUpperCase()}</span></td>
         <td>${conf}%</td>
-        <td>${a.src || '?'}</td>
-        <td>${a.dst || '?'}:${a.dport || 0}</td>
-        <td>${a.sni || '—'}</td>
+        <td>${esc(a.src || '?')}</td>
+        <td>${esc(a.dst || '?')}:${a.dport || 0}</td>
+        <td>${esc(a.sni || '—')}</td>
       </tr>
     `;
   }).join('');
@@ -3041,7 +3042,7 @@ async function loadSuppressionRules() {
     }
   } catch(e) {
     showToast('Error loading rules: '+e.message,'error');
-    document.getElementById('suppression-rules-body').innerHTML = `<div style="text-align:center;padding:32px;color:var(--red);font-family:var(--font-mono);font-size:11px">Error: ${e.message}</div>`;
+    document.getElementById('suppression-rules-body').innerHTML = `<div style="text-align:center;padding:32px;color:var(--red);font-family:var(--font-mono);font-size:11px">Error: ${esc(e.message)}</div>`;
   }
 }
 
@@ -3441,13 +3442,13 @@ function showMapThreatDetail(a) {
     </div>
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
       <div class="detail-section-title">Connection</div>
-      <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${a.src}')">${a.src||'?'}</span></div>
-      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${a.dst}')">${a.dst||'?'}:${a.dport||0}</span></div>
-      ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${a.sni}</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></div>
+      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}:${a.dport||0}</span></div>
+      ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${esc(a.sni)}</span></div>`:''}
     </div>
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
       <div class="detail-section-title">AI Explanation</div>
-      <div class="explanation-box" style="margin: 4px 0;">${a.explanation || 'No explanation available.'}</div>
+      <div class="explanation-box" style="margin: 4px 0;">${esc(a.explanation || 'No explanation available.')}</div>
     </div>
     ${shapHTML}
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
@@ -3459,10 +3460,10 @@ function showMapThreatDetail(a) {
     <div style="padding-bottom:10px;">
       <div class="detail-section-title">Analyst Actions</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
-        <button class="triage-btn tp" style="padding:4px 8px;font-size:9px" onclick="triageAlert('${a.alert_id}','true_positive')">✓ TP</button>
-        <button class="triage-btn fp" style="padding:4px 8px;font-size:9px" onclick="triageAlert('${a.alert_id}','false_positive')">✗ FP</button>
-        <button class="triage-btn block" style="padding:4px 8px;font-size:9px" onclick="respondAlert('${a.alert_id}','block_ip')">🔒 Block</button>
-        <button class="triage-btn" style="padding:4px 8px;font-size:9px;background:var(--purple3);color:var(--purple);border:1px solid rgba(176,107,255,.3)" onclick="prefillSuppressionFromAlert('${a.alert_id}')">🛡️ Suppress</button>
+        <button class="triage-btn tp" style="padding:4px 8px;font-size:9px" onclick="triageAlert('${esc(a.alert_id)}','true_positive')">✓ TP</button>
+        <button class="triage-btn fp" style="padding:4px 8px;font-size:9px" onclick="triageAlert('${esc(a.alert_id)}','false_positive')">✗ FP</button>
+        <button class="triage-btn block" style="padding:4px 8px;font-size:9px" onclick="respondAlert('${esc(a.alert_id)}','block_ip')">🔒 Block</button>
+        <button class="triage-btn" style="padding:4px 8px;font-size:9px;background:var(--purple3);color:var(--purple);border:1px solid rgba(176,107,255,.3)" onclick="prefillSuppressionFromAlert('${esc(a.alert_id)}')">🛡️ Suppress</button>
       </div>
     </div>
   `;
@@ -3489,7 +3490,7 @@ async function isolateHostFromMap(ip) {
   }
   
   try {
-    const res = await fetch(`/api/response/${alert.alert_id}`, {
+    const res = await fetch(`/api/response/${esc(alert.alert_id)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'block_ip', target: ip, auto_execute: false })
@@ -3572,7 +3573,7 @@ function prefillSuppressionFromAlert(alertId) {
   switchTab('suppression');
   
   const label = THREAT_LABELS[alert.threat_type] || alert.threat_type;
-  document.getElementById('sup-name').value = `Suppress ${label} for ${alert.src || '*'} -> ${alert.dst || '*'}:${alert.dport || '*'}`;
+  document.getElementById('sup-name').value = `Suppress ${label} for ${esc(alert.src || '*')} -> ${esc(alert.dst || '*')}:${esc(alert.dport || '*')}`;
   
   const typeSelect = document.getElementById('sup-type');
   if (typeSelect) {
@@ -3583,7 +3584,7 @@ function prefillSuppressionFromAlert(alertId) {
   document.getElementById('sup-dst').value = alert.dst || '*';
   document.getElementById('sup-port').value = alert.dport || '*';
   document.getElementById('sup-sni').value = alert.sni || '*';
-  document.getElementById('sup-reason').value = `Analyst suppression based on Alert ${alert.alert_id}`;
+  document.getElementById('sup-reason').value = `Analyst suppression based on Alert ${esc(alert.alert_id)}`;
   
   showToast(`Prefilled suppression rule for alert ${alertId.slice(0, 8)}`, 'info');
 }

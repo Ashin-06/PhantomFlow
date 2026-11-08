@@ -1846,6 +1846,7 @@ echo PhantomFlow services successfully initialized and running.</code></pre>
   </div>
 
   <script>
+function esc(v) { return String(v ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c])); }
     // Manual search filter
     function filterGuide() {
       const query = document.getElementById('guide-search').value.toLowerCase();
@@ -1937,9 +1938,9 @@ echo PhantomFlow services successfully initialized and running.</code></pre>
       const statusBadge = verdict === 'confirmed_tp' ? '<span class="badge badge-teal">✓ TP confirmed</span>' : '<span class="badge badge-red">✗ FP resolved</span>';
       
       tr.innerHTML = `
-        <td style="padding: 10px; font-weight: 600;">${alertData.title}</td>
-        <td style="padding: 10px; font-family: var(--font-mono);">${alertData.src} &rarr; ${alertData.dst}:${alertData.port}</td>
-        <td style="padding: 10px;"><span class="badge ${badgeClass}">${alertData.severity}</span></td>
+        <td style="padding: 10px; font-weight: 600;">${esc(alertData.title)}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${esc(alertData.src)} &rarr; ${esc(alertData.dst)}:${esc(alertData.port)}</td>
+        <td style="padding: 10px;"><span class="badge ${badgeClass}">${esc(alertData.severity)}</span></td>
         <td style="padding: 10px;">${statusBadge}</td>
       `;
       tbody.appendChild(tr);
@@ -1995,12 +1996,12 @@ echo PhantomFlow services successfully initialized and running.</code></pre>
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="padding: 10px; font-weight: 600;">block_ip</td>
-        <td style="padding: 10px; font-family: var(--font-mono);">${data.dst}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${esc(data.dst)}</td>
         <td style="padding: 10px; font-family: var(--font-mono);">manual-analyst</td>
         <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
       `;
       tbody.appendChild(tr);
-      alert(`Active Response triggered: Block action executed for destination IP ${data.dst}. Firewall configuration updated.`);
+      alert(`Active Response triggered: Block action executed for destination IP ${esc(data.dst)}. Firewall configuration updated.`);
     }
 
     function triggerHostIsolation() {
@@ -2014,12 +2015,12 @@ echo PhantomFlow services successfully initialized and running.</code></pre>
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="padding: 10px; font-weight: 600;">isolate_host</td>
-        <td style="padding: 10px; font-family: var(--font-mono);">${data.src}</td>
+        <td style="padding: 10px; font-family: var(--font-mono);">${esc(data.src)}</td>
         <td style="padding: 10px; font-family: var(--font-mono);">manual-analyst</td>
         <td style="padding: 10px;"><span class="badge badge-teal">executed</span></td>
       `;
       tbody.appendChild(tr);
-      alert(`Active Response triggered: Isolation request sent to EDR agent on host ${data.src}. Network traffic disabled.`);
+      alert(`Active Response triggered: Isolation request sent to EDR agent on host ${esc(data.src)}. Network traffic disabled.`);
     }
 
     function injectCustomAlert() {
