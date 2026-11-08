@@ -213,6 +213,7 @@ async def run_pipeline():
         ensemble.load_models()
         log.info("ML ensemble loaded successfully")
     except Exception as e:
+        ensemble = None  # never use a half-loaded ensemble
         log.warning("ML ensemble unavailable — falling back to threshold detection", exc=e)
 
     # ── Kafka Consumer ─────────────────────────────────────────────────────────

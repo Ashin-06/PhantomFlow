@@ -37,6 +37,22 @@ class PortScanDetector:
         self._mem_ports: Dict[str, set] = {}
         self._mem_hosts: Dict[str, set] = {}
         self._mem_times: Dict[str, list] = {}
+        self._alerted: set = set()
+
+    def _first_alert(self, src_ip: str, scan_type: str) -> bool:
+        """True only for the first flow of a scan in this window; the rest add nothing an analyst needs."""
+        key = f"scan:alerted:{src_ip}:{scan_type}:{self._bucket()}"
+        if self.redis:
+            try:
+                return bool(self.redis.set(key, 1, nx=True, ex=self.WINDOW_SECONDS * 2))
+            except Exception:
+                pass
+        if key in self._alerted:
+            return False
+        if len(self._alerted) > 10000:
+            self._alerted.clear()
+        self._alerted.add(key)
+        return True
 
     def _bucket(self) -> str:
         return str(int(time.time() / self.WINDOW_SECONDS))
@@ -150,7 +166,7 @@ class PortScanDetector:
             mitre.append("T1595.001")
             severity = "high"
 
-        if not is_scan:
+        if not is_scan or not self._first_alert(src_ip, scan_type.replace("stealth_", "")):
             return None
 
         return ScanResult(

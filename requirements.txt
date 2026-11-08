@@ -7,7 +7,7 @@ dpkt
 numpy
 pandas
 scipy
-scikit-learn
+scikit-learn==1.7.2  # the saved models were written by this version
 xgboost
 imbalanced-learn
 
