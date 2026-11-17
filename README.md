@@ -7,6 +7,19 @@ Detects C2 beaconing, DNS tunneling, and data exfiltration inside TLS 1.3, QUIC,
 
 ## Architecture Overview
 
+```mermaid
+flowchart TD
+    A["Network Interface (Zeek / Suricata / eBPF XDP)"] --> B["Kafka Cluster (3-Broker HA)"]
+    B --> C["Async Pipeline Workers"]
+    C --> D["Metadata Feature Extraction (Timing, TLS, DNS, Byte Ratios)"]
+    D --> E1["LSTM Beacon Detector (IAT Sequences)"]
+    D --> E2["XGBoost DNS Classifier (Entropy & Bigrams)"]
+    D --> E3["IsolationForest Exfil Detector (Upload Ratio)"]
+    E1 & E2 & E3 --> F["Stacking Meta-Learner + SHAP Explainability + MITRE ATT&CK"]
+    F --> G["Suppression Engine & PostgreSQL + Redis"]
+    G --> H["FastAPI + Analyst Dashboard (Human-in-the-Loop Response)"]
+```
+
 ```
 Network Interface (Zeek/Suricata)
         ↓
@@ -115,6 +128,20 @@ Training uses online streaming — data is fetched and processed chunk-by-chunk 
 | C2 Beaconing | LSTM on IAT sequences, JA3 fingerprinting | T1071.001, T1573 |
 | DNS Tunneling | Shannon entropy, bigram analysis | T1048.003, T1071.004 |
 | Data Exfiltration | Upload ratio anomaly, IsolationForest | T1041, T1048 |
+
+---
+
+## Benchmark & Evaluation Results
+
+Recorded evaluation runs (`eval/`) across held-out and out-of-distribution (OOD) encrypted traffic datasets, plus API security regression verification (`docs/audit-2026-10-09.md`):
+
+| Evaluation Split / Suite | Samples | Key Metric | Result | Source Artifact |
+|--------------------------|---------|------------|--------|-----------------|
+| **CICIDS 2018 (S3 Holdout)** | 109,051 flows | Stage 2 / Stage 3 XGBoost Macro F1 | **1.000** (0.0% stage degradation) | `eval/eval_cicids2018_s3.json` |
+| **CTU-13 Scenario 9 (Neris Botnet C2)** | 102,934 flows | Stage 2 / Stage 3 XGBoost Macro F1 | **0.500** (`AUC C2 Beacon`: 0.317) | `eval/eval_ctu13_scenario9.json` |
+| **UNSW-NB15 (Out-of-Distribution, z=3.0)** | OOD Split | Recall / F1 / Precision | **100.0% Recall**, **0.483 F1** (31.9% Precision) | `eval/final_results.json` |
+| **CTU-13 Scenario 8 (Murlo IRC OOD, z=3.0)** | OOD Split | Recall (high class-imbalance OOD) | **100.0% Recall** (0.23% Precision prior to stage-2 filtering) | `eval/final_results.json` |
+| **API & Dashboard Security Regression** | 29 test cases | Auth, RS256 JWT, RBAC, Outage & Readiness probes | **29 / 29 Passing (100%)** | `docs/audit-2026-10-09.md` |
 
 ---
 
