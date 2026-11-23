@@ -330,72 +330,7 @@ class OnlineTrainer:
 
             print(f"\n  [XGB] Retraining on {total_buffered:,} buffered rows...")
 
-            # Balance the XGBoost training buffer using oversampling to prevent benign majority bias
-            from sklearn.utils import resample
-            X_resampled_list = []
-            y_resampled_list = []
-            
-            unique_classes, counts = np.unique(y_buf, return_counts=True)
-            max_count = min(max(counts) if len(counts) > 0 else 0, 20000)
-            
-            for cls in [0, 1, 2, 3]:
-                idx = (y_buf == cls)
-                if np.sum(idx) > 0:
-                    X_cls = X_buf[idx]
-                    y_cls = y_buf[idx]
-                    if len(X_cls) < max_count:
-                        X_os, y_os = resample(X_cls, y_cls, replace=True, n_samples=max_count, random_state=42)
-                        X_resampled_list.append(X_os)
-                        y_resampled_list.append(y_os)
-                    else:
-                        X_resampled_list.append(X_cls)
-                        y_resampled_list.append(y_cls)
-                else:
-                    # Class is completely missing from current buffer!
-                    # Pull from replay buffer if we have cached historical samples
-                    if cls in self.replay_buffer_y and len(self.replay_buffer_y[cls]) > 0:
-                        X_cls = np.array(self.replay_buffer_X[cls])
-                        y_cls = np.array(self.replay_buffer_y[cls])
-                        X_os, y_os = resample(X_cls, y_cls, replace=True, n_samples=max_count, random_state=42)
-                        X_resampled_list.append(X_os)
-                        y_resampled_list.append(y_os)
-                    else:
-                        # Replay buffer also empty (e.g., Monday cold-start), seed with zero-baseline dummy rows
-                        dummy_X = np.zeros((max_count, X_buf.shape[1]), dtype=np.float32)
-                        dummy_y = np.full(max_count, cls, dtype=np.int32)
-                        X_resampled_list.append(dummy_X)
-                        y_resampled_list.append(dummy_y)
-            
-            if X_resampled_list:
-                X_buf_bal = np.vstack(X_resampled_list)
-                y_buf_bal = np.concatenate(y_resampled_list)
-            else:
-                X_buf_bal, y_buf_bal = X_buf, y_buf
-
-            self.xgb_model = xgb.XGBClassifier(
-                n_estimators=200,
-                max_depth=6,
-                learning_rate=0.05,
-                subsample=0.8,
-                colsample_bytree=0.8,
-                objective="multi:softprob",
-                num_class=4,
-                eval_metric="mlogloss",
-                tree_method="hist",
-                random_state=42,
-            )
-            self.xgb_model.fit(X_buf_bal, y_buf_bal)
-
-            # Audit feature importances for leakage!
-            importances = self.xgb_model.feature_importances_
-            total_gain = np.sum(importances)
-            if total_gain > 0:
-                for idx, gain in enumerate(importances):
-                    if gain > 0.40 * total_gain:
-                        feat_name = PHANTOMFLOW_FEATURES[idx]
-                        self._log_and_print(
-                            f"  [WARN] Feature Importance Audit: Feature '{feat_name}' has {gain:.1%} of total XGBoost gain — investigate for leakage!"
-                        )
+            self._retrain_xgb(X_buf, y_buf)
 
             # Keep only last 10K rows as buffer
             self.xgb_buffer_X = [X_buf[-10000:]]
@@ -496,6 +431,80 @@ class OnlineTrainer:
 
         self._log_and_print(f"  [SAVED] Checkpoint saved (rows={self.total_rows:,})")
 
+    def _retrain_xgb(self, X_buf: np.ndarray, y_buf: np.ndarray):
+        """Class-balanced XGBoost fit on the buffer plus replayed attack samples."""
+        # Balance the XGBoost training buffer using oversampling to prevent benign majority bias
+        from sklearn.utils import resample
+        X_resampled_list = []
+        y_resampled_list = []
+        placeholder = set()
+
+        unique_classes, counts = np.unique(y_buf, return_counts=True)
+        max_count = min(max(counts) if len(counts) > 0 else 0, 20000)
+        
+        for cls in [0, 1, 2, 3]:
+            idx = (y_buf == cls)
+            if np.sum(idx) > 0:
+                X_cls = X_buf[idx]
+                y_cls = y_buf[idx]
+                if len(X_cls) < max_count:
+                    X_os, y_os = resample(X_cls, y_cls, replace=True, n_samples=max_count, random_state=42)
+                    X_resampled_list.append(X_os)
+                    y_resampled_list.append(y_os)
+                else:
+                    X_resampled_list.append(X_cls)
+                    y_resampled_list.append(y_cls)
+            else:
+                # Class is completely missing from current buffer!
+                # Pull from replay buffer if we have cached historical samples
+                if cls in self.replay_buffer_y and len(self.replay_buffer_y[cls]) > 0:
+                    X_cls = np.array(self.replay_buffer_X[cls])
+                    y_cls = np.array(self.replay_buffer_y[cls])
+                    X_os, y_os = resample(X_cls, y_cls, replace=True, n_samples=max_count, random_state=42)
+                    X_resampled_list.append(X_os)
+                    y_resampled_list.append(y_os)
+                else:
+                    # No real samples of this class yet. XGBoost needs every class
+                    # present, so add one placeholder row with zero sample weight.
+                    # This used to add max_count all-zero rows at full weight,
+                    # which taught the model that an all-zero flow is an attack.
+                    X_resampled_list.append(np.zeros((1, X_buf.shape[1]), dtype=np.float32))
+                    y_resampled_list.append(np.array([cls]))
+                    placeholder.add(cls)
+        
+        if X_resampled_list:
+            X_buf_bal = np.vstack(X_resampled_list)
+            y_buf_bal = np.concatenate(y_resampled_list)
+        else:
+            X_buf_bal, y_buf_bal = X_buf, y_buf
+
+        self.xgb_model = xgb.XGBClassifier(
+            n_estimators=200,
+            max_depth=6,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            objective="multi:softprob",
+            num_class=4,
+            eval_metric="mlogloss",
+            tree_method="hist",
+            random_state=42,
+        )
+        weights = np.where(np.isin(y_buf_bal, list(placeholder)), 0.0, 1.0)
+        self.xgb_model.fit(X_buf_bal, y_buf_bal, sample_weight=weights)
+
+        # Audit feature importances for leakage!
+        importances = self.xgb_model.feature_importances_
+        total_gain = np.sum(importances)
+        if total_gain > 0:
+            for idx, gain in enumerate(importances):
+                if gain > 0.40 * total_gain:
+                    feat_name = PHANTOMFLOW_FEATURES[idx]
+                    self._log_and_print(
+                        f"  [WARN] Feature Importance Audit: Feature '{feat_name}' has {gain:.1%} of total XGBoost gain — investigate for leakage!"
+                    )
+
+
     def _final_save(self):
         """Flush XGB buffer and save everything."""
         # Force final XGB train on whatever is buffered
@@ -503,14 +512,10 @@ class OnlineTrainer:
             X_buf = np.vstack(self.xgb_buffer_X)
             y_buf = np.concatenate(self.xgb_buffer_y)
             if len(X_buf) > 10:
-                self.xgb_model = xgb.XGBClassifier(
-                    n_estimators=300,
-                    objective="multi:softprob",
-                    num_class=4,
-                    eval_metric="mlogloss",
-                    tree_method="hist",
-                )
-                self.xgb_model.fit(X_buf, y_buf)
+                # Same class-balanced fit as the periodic retrain. This used to
+                # fit an unbalanced model on the last buffer only, so the saved
+                # model had mostly seen the final dataset in the stream.
+                self._retrain_xgb(X_buf, y_buf)
 
         self._save_checkpoint()
 

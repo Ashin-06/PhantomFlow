@@ -45,7 +45,7 @@ class OnlineEvaluator:
         Stream a held-out dataset and evaluate all models.
         Implements the strict Three-Stage Generalization Test Protocol:
         - Stage 2: Cross-dataset holdout metrics.
-        - Stage 3: Adversarial test by injecting Gaussian noise (σ=0.1) and checking degradation < 5%.
+        - Stage 3: noise robustness (not adversarial): Gaussian noise (σ=0.1) and checking degradation < 5%.
         """
         all_y_true  = []
         all_X_scaled = []
@@ -73,6 +73,15 @@ class OnlineEvaluator:
 
         X_scaled = np.vstack(all_X_scaled)
         y_true   = np.array(all_y_true)
+
+        # A stream prefix can hold a single class (the first 100K rows of
+        # cicids2018_s3 hold only benign flows). Macro F1 over
+        # one class is then 1.0 for "predict benign everywhere", which is how
+        # eval_cicids2018_s3.json reported a perfect score. Refuse instead.
+        if len(np.unique(y_true)) < 2:
+            print(f"  [Eval] Only class {np.unique(y_true)} present in {len(y_true):,} rows; "
+                  "metrics are undefined. Use python -m evaluation.run instead.")
+            return {"dataset": dataset_key, "n_samples": len(y_true), "single_class": True}
 
         # ==========================================
         # STAGE 2: CROSS-DATASET HOLDOUT EVALUATION
@@ -127,18 +136,18 @@ class OnlineEvaluator:
         for k, v in auc_scores.items():
             print(f"  {k}: {v:.4f}")
 
-        print("\n[STAGE 3] Adversarial Noisy Metrics (Gaussian Noise sigma=0.1):")
+        print("\n[STAGE 3] Gaussian-noise robustness, not adversarial (sigma=0.1):")
         print(f"  SGD Macro F1: {f1_s2_sgd:.4f} -> {f1_s3_sgd:.4f} (Degradation: {degrad_sgd:.2f}%)")
         print(f"  XGB Macro F1: {f1_s2_xgb:.4f} -> {f1_s3_xgb:.4f} (Degradation: {degrad_xgb:.2f}%)")
 
         # Verify degradation threshold (< 5%)
         if degrad_sgd < 5.0:
-            print("  [PASS] SGD Classifier adversarial robustness check (< 5% degradation).")
+            print("  [PASS] SGD Classifier noise robustness check (< 5% degradation).")
         else:
             print("  [FAIL] SGD Classifier overfitted to exact feature magnitudes (> 5% degradation).")
 
         if degrad_xgb < 5.0:
-            print("  [PASS] XGBoost Classifier adversarial robustness check (< 5% degradation).")
+            print("  [PASS] XGBoost Classifier noise robustness check (< 5% degradation).")
         else:
             print("  [FAIL] XGBoost Classifier overfitted to exact feature magnitudes (> 5% degradation).")
 
