@@ -25,7 +25,7 @@ class FlowStateCache:
     """
 
     def __init__(self, host: str = "localhost", port: int = 6379,
-                 db: int = 0, password: str = "PhantomSecure2026!"):
+                 db: int = 0, password: str | None = None):
         self.r = redis.Redis(
             host=host, port=port, db=db, password=password,
             decode_responses=True,

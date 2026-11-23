@@ -81,17 +81,17 @@ class SecretsManager:
         mapping = {
             "phantomflow/postgres": {
                 "user":     os.getenv("PG_USER", "phantom"),
-                "password": os.getenv("PG_PASSWORD", "PhantomSecure2026!"),
+                "password": os.getenv("PG_PASSWORD", ""),
                 "host":     os.getenv("PG_HOST", "localhost"),
                 "port":     os.getenv("PG_PORT", "5432"),
                 "db":       os.getenv("PG_DB", "phantomflow"),
             },
             "phantomflow/redis": {
-                "password": os.getenv("REDIS_PASSWORD", "PhantomSecure2026!"),
+                "password": os.getenv("REDIS_PASSWORD", ""),
                 "host":     os.getenv("REDIS_HOST", "localhost"),
             },
             "phantomflow/jwt": {
-                "secret":      os.getenv("JWT_SECRET", "dev_secret_do_not_use_in_prod"),
+                "secret":      os.getenv("JWT_SECRET", ""),
                 "algorithm":   os.getenv("JWT_ALGORITHM", "HS256"),
                 "public_key":  os.getenv("JWT_PUBLIC_KEY", ""),     # empty = use HS256
                 "private_key": os.getenv("JWT_PRIVATE_KEY", ""),

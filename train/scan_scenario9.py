@@ -4,7 +4,7 @@ import requests
 url = "https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-50/detailed-bidirectional-flow-labels/capture20110817.binetflow"
 print(f"Scanning Scenario 9 for botnet lines...")
 headers = {"User-Agent": "PhantomFlow-Research/1.0 (academic use)"}
-resp = requests.get(url, stream=True, headers=headers)
+resp = requests.get(url, stream=True, headers=headers, timeout=60)
 
 botnet_lines = []
 total_lines = 0

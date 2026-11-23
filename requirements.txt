@@ -8,6 +8,7 @@ numpy
 pandas
 scipy
 scikit-learn==1.7.2  # the saved models were written by this version
+joblib                   # model files (lab/triangulation_testing.py)
 xgboost
 imbalanced-learn
 

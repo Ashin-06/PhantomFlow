@@ -66,7 +66,7 @@ pip install -r requirements.txt
 
 ### 2. Start infrastructure
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+docker compose --env-file .env -f docker/docker-compose.yml up -d
 # Starts: Kafka, Redis, PostgreSQL
 # This Compose file exposes PostgreSQL on port 5433; .env.example already matches it.
 ```

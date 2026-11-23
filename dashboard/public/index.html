@@ -1437,10 +1437,10 @@ function updateCharts() {
   document.getElementById('dist-bars').innerHTML = order.map(k => {
     const pct = Math.round((tc[k]||0)/total*100);
     const isFiltered = activeThreatFilter === k;
-    return `<div class="bar-row clickable${isFiltered?' active-filter':''}" onclick="toggleThreatFilter('${k}')" style="${isFiltered?'background:rgba(255,255,255,0.05);':''}">
-      <div class="bar-name" style="${isFiltered?'color:var(--teal);font-weight:bold;':''}">${THREAT_LABELS[k]||k}</div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${THREAT_COLORS[k]}"></div></div>
-      <div class="bar-cnt">${tc[k]||0}</div>
+    return `<div class="bar-row clickable${esc(isFiltered?' active-filter':'')}" onclick="toggleThreatFilter('${esc(k)}')" style="${esc(isFiltered?'background:rgba(255,255,255,0.05);':'')}">
+      <div class="bar-name" style="${esc(isFiltered?'color:var(--teal);font-weight:bold;':'')}">${esc(THREAT_LABELS[k]||k)}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${esc(pct)}%;background:${esc(THREAT_COLORS[k])}"></div></div>
+      <div class="bar-cnt">${esc(tc[k]||0)}</div>
     </div>`;
   }).join('');
 
@@ -1450,9 +1450,9 @@ function updateCharts() {
     const h = Math.round(v/mx*100);
     const isFiltered = activeSparklineBucket === i;
     const barBg = isFiltered ? 'var(--teal)' : 'var(--gray)';
-    return `<div class="spark-bar clickable${isFiltered?' active':''}" style="height:${Math.max(h,3)}%;background:${barBg}" 
-      onclick="filterAlertsByTimeBucket(${i}, ${v})"
-      onmousemove="showSparklineTooltip(event, ${i}, ${v})"
+    return `<div class="spark-bar clickable${esc(isFiltered?' active':'')}" style="height:${esc(Math.max(h,3))}%;background:${esc(barBg)}" 
+      onclick="filterAlertsByTimeBucket(${esc(i)}, ${esc(v)})"
+      onmousemove="showSparklineTooltip(event, ${esc(i)}, ${esc(v)})"
       onmouseleave="hideSparklineTooltip()"></div>`;
   }).join('');
 }
@@ -1502,7 +1502,7 @@ function renderAlertList() {
 
   if(!filtered.length) {
     const filterLabel = activeThreatFilter ? activeThreatFilter.replace('_', ' ').toUpperCase() : 'any';
-    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text4);font-family:var(--font-mono);font-size:10px">No ${filterLabel} alerts in feed</div>`;
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text4);font-family:var(--font-mono);font-size:10px">No ${esc(filterLabel)} alerts in feed</div>`;
     
     // Clear detail content if no alerts match
     const detailContent = document.getElementById('detail-content');
@@ -1559,13 +1559,13 @@ function buildAlertItemHTML(a) {
   const isSelected = a.alert_id === selectedAlertId;
 
   const ttps = Array.isArray(a.mitre_ttps) ? a.mitre_ttps : (a.mitre_ttps||'').split(',').filter(Boolean);
-  const ttpsHTML = ttps.map(t => `<span class="mitre-badge" style="padding:1px 4px;font-size:8px;margin-right:4px;display:inline-block;" onclick="event.stopPropagation(); showMitreDetail('${t}')" title="Click: ${MITRE_DB[t]||t}">${t}</span>`).join('');
+  const ttpsHTML = ttps.map(t => `<span class="mitre-badge" style="padding:1px 4px;font-size:8px;margin-right:4px;display:inline-block;" onclick="event.stopPropagation(); showMitreDetail('${esc(t)}')" title="Click: ${esc(MITRE_DB[t]||t)}">${esc(t)}</span>`).join('');
 
-  return `<div class="alert-item sev-${sev}${isSelected?' selected':''}" data-id="${esc(a.alert_id)}" id="ali-${esc(a.alert_id)}">
+  return `<div class="alert-item sev-${esc(sev)}${esc(isSelected?' selected':'')}" data-id="${esc(a.alert_id)}" id="ali-${esc(a.alert_id)}">
     <div class="alert-dot"></div>
     <div style="flex:1; min-width:0;">
-      <div class="alert-type" style="color:${col}">${label}</div>
-      <div class="alert-src"><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span> → <span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</div>
+      <div class="alert-type" style="color:${esc(col)}">${esc(label)}</div>
+      <div class="alert-src"><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span> → <span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${esc(a.dport||0)}</div>
       ${a.sni?`<div class="alert-sni">${esc(a.sni)}</div>`:''}
       ${ttpsHTML ? `<div class="alert-mitre" style="margin-top:4px;margin-bottom:2px;display:flex;flex-wrap:wrap;gap:2px;">${ttpsHTML}</div>` : ''}
       <div class="alert-triage">
@@ -1575,7 +1575,7 @@ function buildAlertItemHTML(a) {
       </div>
     </div>
     <div style="text-align:right;">
-      <div class="alert-conf" style="color:${confCol}">${conf}%</div>
+      <div class="alert-conf" style="color:${esc(confCol)}">${esc(conf)}%</div>
       <div class="alert-time">${ago < 1 ? 'now' : '-'+ago+'m'}</div>
     </div>
   </div>`;
@@ -1591,7 +1591,7 @@ function showDetail(a) {
   const sev = (a.alert_severity || a.severity || 'MEDIUM').toUpperCase();
   const sevBadge = document.getElementById('detail-sev-badge');
   sevBadge.textContent = sev;
-  sevBadge.className = `badge sev-${sev}`;
+  sevBadge.className = `badge sev-${esc(sev)}`;
 
   const type = a.threat_type || 'unknown';
   const col = THREAT_COLORS[type] || 'var(--text)';
@@ -1611,9 +1611,9 @@ function showDetail(a) {
         const pos = fv >= 0;
         const pct = Math.round(Math.abs(fv)/maxAbs*100);
         return `<div class="shap-row">
-          <div class="shap-lbl">${k}</div>
-          <div class="shap-bg"><div class="shap-fill" style="width:${pct}%;background:${pos?'var(--teal)':'var(--red)'}"></div></div>
-          <div class="shap-v" style="color:${pos?'var(--teal)':'var(--red)'}">${fv>=0?'+':''}${fv.toFixed(2)}</div>
+          <div class="shap-lbl">${esc(k)}</div>
+          <div class="shap-bg"><div class="shap-fill" style="width:${esc(pct)}%;background:${esc(pos?'var(--teal)':'var(--red)')}"></div></div>
+          <div class="shap-v" style="color:${esc(pos?'var(--teal)':'var(--red)')}">${esc(fv>=0?'+':'')}${esc(fv.toFixed(2))}</div>
         </div>`;
       }).join('')}
     </div>`;
@@ -1622,7 +1622,7 @@ function showDetail(a) {
   // Sub-scores
   const subs = typeof a.sub_scores === 'string' ? JSON.parse(a.sub_scores||'{}') : (a.sub_scores || {});
   const subRows = Object.entries(subs).map(([k,v]) =>
-    `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${typeof v === 'number' ? v.toFixed(3) : v}</span></div>`
+    `<div class="detail-row"><span class="detail-key">${esc(k)}</span><span class="detail-val">${esc(typeof v === 'number' ? v.toFixed(3) : v)}</span></div>`
   ).join('');
 
   const ttps = Array.isArray(a.mitre_ttps) ? a.mitre_ttps : (a.mitre_ttps||'').split(',').filter(Boolean);
@@ -1630,14 +1630,14 @@ function showDetail(a) {
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-section">
       <div class="detail-section-title">Threat Overview</div>
-      <div class="detail-row"><span class="detail-key">threat type</span><span class="detail-val" style="color:${col};font-weight:600">${label}</span></div>
-      <div class="detail-row"><span class="detail-key">confidence</span><span class="detail-val" style="color:${confCol};font-weight:700">${conf}%</span></div>
-      <div class="detail-row"><span class="detail-key">severity</span><span class="detail-val"><span class="sev-badge sev-${sev}">${sev}</span></span></div>
+      <div class="detail-row"><span class="detail-key">threat type</span><span class="detail-val" style="color:${esc(col)};font-weight:600">${esc(label)}</span></div>
+      <div class="detail-row"><span class="detail-key">confidence</span><span class="detail-val" style="color:${esc(confCol)};font-weight:700">${esc(conf)}%</span></div>
+      <div class="detail-row"><span class="detail-key">severity</span><span class="detail-val"><span class="sev-badge sev-${esc(sev)}">${esc(sev)}</span></span></div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Connection</div>
       <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></span></div>
-      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</span></div>
+      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent"><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${esc(a.dport||0)}</span></div>
       ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${esc(a.sni)}</span></div>`:''}
     </div>
     ${subRows ? `<div class="detail-section"><div class="detail-section-title">Detector Sub-Scores</div>${subRows}</div>` : ''}
@@ -1649,7 +1649,7 @@ function showDetail(a) {
     <div class="detail-section">
       <div class="detail-section-title">MITRE ATT&CK TTPs</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-        ${ttps.map(t => `<div class="mitre-badge" onclick="showMitreDetail('${t}')" title="Click: ${MITRE_DB[t]||t}">${t}</div>`).join('')}
+        ${ttps.map(t => `<div class="mitre-badge" onclick="showMitreDetail('${esc(t)}')" title="Click: ${esc(MITRE_DB[t]||t)}">${esc(t)}</div>`).join('')}
       </div>
     </div>
     <div class="detail-section">
@@ -1760,7 +1760,7 @@ function buildMitre() {
   const mitreGrid = document.getElementById('mitre-grid');
   if (!mitreGrid) return;
   mitreGrid.innerHTML = Object.entries(MITRE_DB).map(([id,name]) =>
-    `<div class="mitre-badge" onclick="showMitreDetail('${id}')" title="Click for details: ${name}">${id}<br><span style="color:var(--text3);font-size:8px">${name.split(':')[name.split(':').length-1].trim()}</span></div>`
+    `<div class="mitre-badge" onclick="showMitreDetail('${esc(id)}')" title="Click for details: ${esc(name)}">${esc(id)}<br><span style="color:var(--text3);font-size:8px">${esc(name.split(':')[name.split(':').length-1].trim())}</span></div>`
   ).join('');
 }
 
@@ -1850,15 +1850,15 @@ function huntRenderTable(alerts) {
     const conf = Math.round((a.confidence||0)*100);
     const sev = (a.alert_severity||a.severity||'medium').toLowerCase();
     const ttpsList = Array.isArray(a.mitre_ttps) ? a.mitre_ttps : (a.mitre_ttps||'').split(',').filter(Boolean);
-    const ttpsHTML = ttpsList.map(t => `<span class="mitre-badge" style="padding:2px 4px;font-size:9px" onclick="showMitreDetail('${t.trim()}')" title="Click: ${MITRE_DB[t.trim()]||t.trim()}">${t.trim()}</span>`).join(' ');
+    const ttpsHTML = ttpsList.map(t => `<span class="mitre-badge" style="padding:2px 4px;font-size:9px" onclick="showMitreDetail('${esc(t.trim())}')" title="Click: ${esc(MITRE_DB[t.trim()]||t.trim())}">${esc(t.trim())}</span>`).join(' ');
     const ts = a.timestamp ? new Date(a.timestamp*1000).toLocaleTimeString('en-GB') : '--';
     return `<tr>
-      <td style="color:var(--text3)">${ts}</td>
-      <td style="color:${col};font-weight:600">${THREAT_LABELS[type]||type}</td>
-      <td><span class="badge ${sev==='critical'?'badge-red':sev==='high'?'badge-amber':'badge-blue'}">${sev.toUpperCase()}</span></td>
-      <td style="color:${conf>90?'var(--red)':conf>70?'var(--amber)':'var(--blue)'};font-weight:600">${conf}%</td>
+      <td style="color:var(--text3)">${esc(ts)}</td>
+      <td style="color:${esc(col)};font-weight:600">${esc(THREAT_LABELS[type]||type)}</td>
+      <td><span class="badge ${esc(sev==='critical'?'badge-red':sev==='high'?'badge-amber':'badge-blue')}">${esc(sev.toUpperCase())}</span></td>
+      <td style="color:${esc(conf>90?'var(--red)':conf>70?'var(--amber)':'var(--blue)')};font-weight:600">${esc(conf)}%</td>
       <td><span class="ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></td>
-      <td><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${a.dport||0}</td>
+      <td><span class="ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}</span>:${esc(a.dport||0)}</td>
       <td style="color:var(--text3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.sni||'—')}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:2px">${ttpsHTML || '—'}</div></td>
       <td>
@@ -2130,9 +2130,9 @@ function startMapAnimation() {
       tooltipDiv.style.display = 'block';
       tooltipDiv.innerHTML = `
         <div style="font-weight:bold;color:var(--teal);margin-bottom:4px;">HOST DETAILED INFO</div>
-        <div>IP: ${hoveredNode.ip}</div>
-        <div>Type: ${hoveredNode.category.toUpperCase()}</div>
-        <div>Threat Connections: ${mapEdges.filter(e => e.src === hoveredNode.ip || e.dst === hoveredNode.ip).length}</div>
+        <div>IP: ${esc(hoveredNode.ip)}</div>
+        <div>Type: ${esc(hoveredNode.category.toUpperCase())}</div>
+        <div>Threat Connections: ${esc(mapEdges.filter(e => e.src === hoveredNode.ip || e.dst === hoveredNode.ip).length)}</div>
       `;
     } else if (hoveredEdge) {
       tooltipDiv.style.left = `${e.clientX - rect.left + 15}px`;
@@ -2140,11 +2140,11 @@ function startMapAnimation() {
       tooltipDiv.style.display = 'block';
       const col = THREAT_COLORS[hoveredEdge.type] || '#4a9eff';
       tooltipDiv.innerHTML = `
-        <div style="font-weight:bold;color:${col};margin-bottom:4px;">THREAT VECTOR: ${THREAT_LABELS[hoveredEdge.type] || hoveredEdge.type}</div>
-        <div>Flow: ${hoveredEdge.src} → ${hoveredEdge.dst}:${hoveredEdge.dport}</div>
-        <div>Confidence: ${Math.round(hoveredEdge.conf * 100)}%</div>
-        <div>Severity: ${hoveredEdge.severity.toUpperCase()}</div>
-        <div style="margin-top:4px;color:var(--text2);max-width:200px;font-size:9px;">${hoveredEdge.explanation}</div>
+        <div style="font-weight:bold;color:${esc(col)};margin-bottom:4px;">THREAT VECTOR: ${esc(THREAT_LABELS[hoveredEdge.type] || hoveredEdge.type)}</div>
+        <div>Flow: ${esc(hoveredEdge.src)} → ${esc(hoveredEdge.dst)}:${esc(hoveredEdge.dport)}</div>
+        <div>Confidence: ${esc(Math.round(hoveredEdge.conf * 100))}%</div>
+        <div>Severity: ${esc(hoveredEdge.severity.toUpperCase())}</div>
+        <div style="margin-top:4px;color:var(--text2);max-width:200px;font-size:9px;">${esc(hoveredEdge.explanation)}</div>
       `;
     } else {
       tooltipDiv.style.display = 'none';
@@ -2463,10 +2463,10 @@ const DATASETS = [
 
 function buildDsRegistry() {
   document.getElementById('ds-grid').innerHTML = DATASETS.map(ds =>
-    `<div class="ds-card" id="dsc-${ds.id}">
-      <div class="ds-name"><span>${ds.name}</span><span class="ds-badge waiting" id="dsb-${ds.id}">WAIT</span></div>
-      <div class="ds-sub">${ds.desc}</div>
-      <div class="ds-bar"><div class="ds-fill" id="dsp-${ds.id}"></div></div>
+    `<div class="ds-card" id="dsc-${esc(ds.id)}">
+      <div class="ds-name"><span>${esc(ds.name)}</span><span class="ds-badge waiting" id="dsb-${esc(ds.id)}">WAIT</span></div>
+      <div class="ds-sub">${esc(ds.desc)}</div>
+      <div class="ds-bar"><div class="ds-fill" id="dsp-${esc(ds.id)}"></div></div>
     </div>`
   ).join('');
 }
@@ -2600,13 +2600,13 @@ async function loadResponseQueue() {
         const statusCol = r.status==='executed'?'var(--green)':r.status==='pending'?'var(--amber)':'var(--red)';
         const created = r.created_at ? new Date(r.created_at).toLocaleTimeString('en-GB') : '--';
         return `<div class="response-item">
-          <span class="badge" style="background:${statusCol}22;color:${statusCol};border:1px solid ${statusCol}44">${r.status.toUpperCase()}</span>
-          <span style="font-family:var(--font-mono);font-size:10px;color:var(--text)"><span class="ip-link" onclick="focusHostInMap('${r.target_ip}')">${r.target_ip||'?'}</span> <span style="color:var(--text3)">· ${r.alert_id?.slice(0,8)}...</span></span>
-          <span style="color:var(--text2)">${r.action?.replace('_',' ')}</span>
-          <span style="color:var(--text3)">${created}</span>
+          <span class="badge" style="background:${esc(statusCol)}22;color:${esc(statusCol)};border:1px solid ${esc(statusCol)}44">${esc(r.status.toUpperCase())}</span>
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--text)"><span class="ip-link" onclick="focusHostInMap('${esc(r.target_ip)}')">${esc(r.target_ip||'?')}</span> <span style="color:var(--text3)">· ${esc(r.alert_id?.slice(0,8))}...</span></span>
+          <span style="color:var(--text2)">${esc(r.action?.replace('_',' '))}</span>
+          <span style="color:var(--text3)">${esc(created)}</span>
           ${r.status==='pending'
-            ? `<span><button class="approve-btn" onclick="approveAction('${r.audit_id}')">✓ Approve</button><button class="reject-btn" onclick="showToast('Rejected','error')">✗</button></span>`
-            : `<span style="color:var(--text4);font-size:9px">${r.approved_by||'—'}</span>`}
+            ? `<span><button class="approve-btn" onclick="approveAction('${esc(r.audit_id)}')">✓ Approve</button><button class="reject-btn" onclick="showToast('Rejected','error')">✗</button></span>`
+            : `<span style="color:var(--text4);font-size:9px">${esc(r.approved_by||'—')}</span>`}
         </div>`;
       }).join('');
     }
@@ -2760,12 +2760,12 @@ function generateExecutiveReport() {
     const color = THREAT_COLORS[type] || '#4a9eff';
     return `
       <div style="display:flex;align-items:center;margin-bottom:8px;font-family:monospace;font-size:12px">
-        <span style="width:150px;font-weight:bold">${THREAT_LABELS[type] || type}</span>
+        <span style="width:150px;font-weight:bold">${esc(THREAT_LABELS[type] || type)}</span>
         <div style="flex:1;background:#e2e8f0;height:12px;border-radius:6px;margin:0 12px;overflow:hidden">
-          <div style="width:${pct}%;background:${color};height:100%"></div>
+          <div style="width:${esc(pct)}%;background:${esc(color)};height:100%"></div>
         </div>
-        <span style="width:40px;text-align:right;font-weight:bold">${count}</span>
-        <span style="width:50px;text-align:right;color:#64748b">(${pct}%)</span>
+        <span style="width:40px;text-align:right;font-weight:bold">${esc(count)}</span>
+        <span style="width:50px;text-align:right;color:#64748b">(${esc(pct)}%)</span>
       </div>
     `;
   }).join('');
@@ -2777,13 +2777,13 @@ function generateExecutiveReport() {
     const conf = Math.round((a.confidence || 0) * 100);
     return `
       <tr>
-        <td>${i+1}</td>
-        <td>${ts}</td>
-        <td style="font-weight:bold">${THREAT_LABELS[type] || type}</td>
-        <td><span class="badge badge-${sev}">${sev.toUpperCase()}</span></td>
-        <td>${conf}%</td>
+        <td>${esc(i+1)}</td>
+        <td>${esc(ts)}</td>
+        <td style="font-weight:bold">${esc(THREAT_LABELS[type] || type)}</td>
+        <td><span class="badge badge-${esc(sev)}">${esc(sev.toUpperCase())}</span></td>
+        <td>${esc(conf)}%</td>
         <td>${esc(a.src || '?')}</td>
-        <td>${esc(a.dst || '?')}:${a.dport || 0}</td>
+        <td>${esc(a.dst || '?')}:${esc(a.dport || 0)}</td>
         <td>${esc(a.sni || '—')}</td>
       </tr>
     `;
@@ -2947,25 +2947,25 @@ function generateExecutiveReport() {
         </div>
         <div class="title">
           <div>EXECUTIVE INCIDENT REPORT</div>
-          <div style="font-size:11px;font-weight:normal;color:#94a3b8;margin-top:4px">Generated: ${new Date().toLocaleString()}</div>
+          <div style="font-size:11px;font-weight:normal;color:#94a3b8;margin-top:4px">Generated: ${esc(new Date().toLocaleString())}</div>
         </div>
       </div>
 
       <div class="kpi-container">
         <div class="kpi-card">
-          <div class="kpi-val">${totalAlerts}</div>
+          <div class="kpi-val">${esc(totalAlerts)}</div>
           <div class="kpi-lbl">Total Incidents</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-val" style="color:#ef4444">${severityCounts.critical}</div>
+          <div class="kpi-val" style="color:#ef4444">${esc(severityCounts.critical)}</div>
           <div class="kpi-lbl">Critical Severity</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-val" style="color:#f59e0b">${severityCounts.high}</div>
+          <div class="kpi-val" style="color:#f59e0b">${esc(severityCounts.high)}</div>
           <div class="kpi-lbl">High Severity</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-val" style="color:#3b82f6">${severityCounts.medium + severityCounts.low}</div>
+          <div class="kpi-val" style="color:#3b82f6">${esc(severityCounts.medium + severityCounts.low)}</div>
           <div class="kpi-lbl">Med/Low Severity</div>
         </div>
       </div>
@@ -2983,7 +2983,7 @@ function generateExecutiveReport() {
       </div>
 
       <div class="section" style="page-break-before: always;">
-        <div class="section-title">Detailed Incident Log (${totalAlerts} items)</div>
+        <div class="section-title">Detailed Incident Log (${esc(totalAlerts)} items)</div>
         <table>
           <thead>
             <tr>
@@ -3025,17 +3025,17 @@ async function loadSuppressionRules() {
         const active = r.is_active;
         const toggleLabel = active ? 'Disable' : 'Enable';
         const toggleClass = active ? 'fp' : 'tp';
-        const matchStr = `Src: ${r.src_ip_cidr || '*'}<br>Dst: ${r.dst_ip_cidr || '*'}:${r.dst_port || '*'}<br>SNI: ${r.sni_pattern || '*'}`;
+        const matchStr = `Src: ${esc(r.src_ip_cidr || '*')}<br>Dst: ${esc(r.dst_ip_cidr || '*')}:${esc(r.dst_port || '*')}<br>SNI: ${esc(r.sni_pattern || '*')}`;
         return `<div style="display:grid;grid-template-columns:40px 100px 100px 100px 1fr 100px 100px;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:10px;align-items:center">
-          <span class="badge" style="background:${active?'var(--green)':'var(--gray)'}22;color:${active?'var(--green)':'var(--text3)'};border:1px solid ${active?'var(--green)':'var(--gray)'}44;text-align:center">${active?'YES':'NO'}</span>
-          <span style="font-weight:600;color:var(--text)">${r.name}</span>
-          <span style="color:var(--text2)">${r.threat_type || 'all'}</span>
+          <span class="badge" style="background:${esc(active?'var(--green)':'var(--gray)')}22;color:${esc(active?'var(--green)':'var(--text3)')};border:1px solid ${esc(active?'var(--green)':'var(--gray)')}44;text-align:center">${esc(active?'YES':'NO')}</span>
+          <span style="font-weight:600;color:var(--text)">${esc(r.name)}</span>
+          <span style="color:var(--text2)">${esc(r.threat_type || 'all')}</span>
           <span style="color:var(--text3);line-height:1.2;font-size:9px">${matchStr}</span>
-          <span style="color:var(--text2)">${r.justification || '—'}</span>
-          <span style="color:var(--text3)">${r.created_by || 'system'}</span>
+          <span style="color:var(--text2)">${esc(r.justification || '—')}</span>
+          <span style="color:var(--text3)">${esc(r.created_by || 'system')}</span>
           <span>
-            <button class="triage-btn ${toggleClass}" style="padding:2px 6px" onclick="toggleSuppressionRule('${r.rule_id}')">${toggleLabel}</button>
-            <button class="triage-btn fp" style="padding:2px 6px" onclick="deleteSuppressionRule('${r.rule_id}')">Delete</button>
+            <button class="triage-btn ${esc(toggleClass)}" style="padding:2px 6px" onclick="toggleSuppressionRule('${esc(r.rule_id)}')">${esc(toggleLabel)}</button>
+            <button class="triage-btn fp" style="padding:2px 6px" onclick="deleteSuppressionRule('${esc(r.rule_id)}')">Delete</button>
           </span>
         </div>`;
       }).join('');
@@ -3293,26 +3293,26 @@ function renderLiveFlowsTable(flows) {
   tbody.innerHTML = flows.map(flow => {
     const timeStr = new Date(flow.timestamp * 1000).toLocaleTimeString();
     const protoClass = flow.protocol ? flow.protocol.toLowerCase() : 'other';
-    const protoBadge = `<span class="badge-proto ${protoClass}">${flow.protocol || 'OTHER'}</span>`;
+    const protoBadge = `<span class="badge-proto ${esc(protoClass)}">${esc(flow.protocol || 'OTHER')}</span>`;
     
-    let dstDisplay = `${flow.dst_ip}:${flow.dst_port}`;
+    let dstDisplay = `${esc(flow.dst_ip)}:${esc(flow.dst_port)}`;
     if (flow.sni) {
-      dstDisplay += ` <span style="color:var(--text4);font-size:10px;">(${flow.sni})</span>`;
+      dstDisplay += ` <span style="color:var(--text4);font-size:10px;">(${esc(flow.sni)})</span>`;
     } else if (flow.dns_query) {
-      dstDisplay += ` <span style="color:var(--text4);font-size:10px;">(${flow.dns_query})</span>`;
+      dstDisplay += ` <span style="color:var(--text4);font-size:10px;">(${esc(flow.dns_query)})</span>`;
     }
     
     const threatBadge = getFlowThreatBadge(flow);
     
     return `
       <tr>
-        <td style="color:var(--text3)">${timeStr}</td>
+        <td style="color:var(--text3)">${esc(timeStr)}</td>
         <td>${protoBadge}</td>
-        <td>${flow.src_ip}:${flow.src_port}</td>
+        <td>${esc(flow.src_ip)}:${esc(flow.src_port)}</td>
         <td style="color:var(--teal);text-align:center;">→</td>
         <td>${dstDisplay}</td>
-        <td>${formatTime(flow.duration_s)}</td>
-        <td>${formatBytes(flow.orig_bytes)} / ${formatBytes(flow.resp_bytes)}</td>
+        <td>${esc(formatTime(flow.duration_s))}</td>
+        <td>${esc(formatBytes(flow.orig_bytes))} / ${esc(formatBytes(flow.resp_bytes))}</td>
         <td>${threatBadge}</td>
       </tr>
     `;
@@ -3345,7 +3345,7 @@ function getFlowThreatBadge(flow) {
   if (alert) {
     const typeLabel = alert.threat_type ? alert.threat_type.replace('_', ' ').toUpperCase() : 'ALERT';
     const color = THREAT_COLORS[alert.threat_type] || '#ff4757';
-    return `<span class="badge" style="background: ${color}1a; color: ${color}; border: 1px solid ${color}33; text-shadow: 0 0 4px ${color}88; box-shadow: 0 0 6px ${color}22">⚠️ ${typeLabel}</span>`;
+    return `<span class="badge" style="background: ${esc(color)}1a; color: ${esc(color)}; border: 1px solid ${esc(color)}33; text-shadow: 0 0 4px ${esc(color)}88; box-shadow: 0 0 6px ${esc(color)}22">⚠️ ${esc(typeLabel)}</span>`;
   }
   
   return '<span style="color:var(--text4)">● Benign</span>';
@@ -3423,9 +3423,9 @@ function showMapThreatDetail(a) {
         const pos = fv >= 0;
         const pct = Math.round(Math.abs(fv)/maxAbs*100);
         return `<div class="shap-row">
-          <div class="shap-lbl">${k}</div>
-          <div class="shap-bg"><div class="shap-fill" style="width:${pct}%;background:${pos?'var(--teal)':'var(--red)'}"></div></div>
-          <div class="shap-v" style="color:${pos?'var(--teal)':'var(--red)'}">${fv>=0?'+':''}${fv.toFixed(2)}</div>
+          <div class="shap-lbl">${esc(k)}</div>
+          <div class="shap-bg"><div class="shap-fill" style="width:${esc(pct)}%;background:${esc(pos?'var(--teal)':'var(--red)')}"></div></div>
+          <div class="shap-v" style="color:${esc(pos?'var(--teal)':'var(--red)')}">${esc(fv>=0?'+':'')}${esc(fv.toFixed(2))}</div>
         </div>`;
       }).join('')}
     </div>`;
@@ -3436,14 +3436,14 @@ function showMapThreatDetail(a) {
   document.getElementById('mtd-content').innerHTML = `
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
       <div class="detail-section-title">Threat Overview</div>
-      <div class="detail-row"><span class="detail-key">threat type</span><span class="detail-val" style="color:${col};font-weight:600">${label}</span></div>
-      <div class="detail-row"><span class="detail-key">confidence</span><span class="detail-val" style="color:${confCol};font-weight:700">${conf}%</span></div>
-      <div class="detail-row"><span class="detail-key">severity</span><span class="detail-val"><span class="sev-badge sev-${sev}">${sev}</span></span></div>
+      <div class="detail-row"><span class="detail-key">threat type</span><span class="detail-val" style="color:${esc(col)};font-weight:600">${esc(label)}</span></div>
+      <div class="detail-row"><span class="detail-key">confidence</span><span class="detail-val" style="color:${esc(confCol)};font-weight:700">${esc(conf)}%</span></div>
+      <div class="detail-row"><span class="detail-key">severity</span><span class="detail-val"><span class="sev-badge sev-${esc(sev)}">${esc(sev)}</span></span></div>
     </div>
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
       <div class="detail-section-title">Connection</div>
       <div class="detail-row"><span class="detail-key">source</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${esc(a.src)}')">${esc(a.src||'?')}</span></div>
-      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}:${a.dport||0}</span></div>
+      <div class="detail-row"><span class="detail-key">destination</span><span class="detail-val accent ip-link" onclick="focusHostInMap('${esc(a.dst)}')">${esc(a.dst||'?')}:${esc(a.dport||0)}</span></div>
       ${a.sni?`<div class="detail-row"><span class="detail-key">sni</span><span class="detail-val">${esc(a.sni)}</span></div>`:''}
     </div>
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
@@ -3454,7 +3454,7 @@ function showMapThreatDetail(a) {
     <div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
       <div class="detail-section-title">MITRE ATT&CK TTPs</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-        ${ttps.map(t => `<div class="mitre-badge" onclick="showMitreDetail('${t}')" title="Click: ${MITRE_DB[t]||t}">${t}</div>`).join('')}
+        ${ttps.map(t => `<div class="mitre-badge" onclick="showMitreDetail('${esc(t)}')" title="Click: ${esc(MITRE_DB[t]||t)}">${esc(t)}</div>`).join('')}
       </div>
     </div>
     <div style="padding-bottom:10px;">
@@ -3615,8 +3615,8 @@ function showSparklineTooltip(event, index, count) {
   const timeRange = `${formatTime(t_start)} - ${formatTime(t_end)}`;
   
   tooltip.innerHTML = `
-    <div style="font-weight:bold;color:var(--teal)">Alert Count: ${count}</div>
-    <div style="color:var(--text3);margin-top:2px">${timeRange}</div>
+    <div style="font-weight:bold;color:var(--teal)">Alert Count: ${esc(count)}</div>
+    <div style="color:var(--text3);margin-top:2px">${esc(timeRange)}</div>
   `;
   tooltip.style.left = (event.pageX + 10) + 'px';
   tooltip.style.top = (event.pageY - 35) + 'px';
