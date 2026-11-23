@@ -5,7 +5,7 @@ Reproduce everything below with:
 ```sh
 pip install -r requirements-eval.txt
 python -m evaluation.download   # about 1.3 GB downloaded, 46 MB kept in data/
-python -m evaluation.run        # about 2 minutes; writes eval/results.{json,md}
+python -m evaluation.run        # about 8 minutes; writes eval/results.{json,md}
 ```
 
 Everything is pinned in `evaluation/config.toml`: data sources with sha256,
@@ -45,9 +45,8 @@ dataset records them.
   must be compared with the prevalence column, which is the PR-AUC of a random
   scorer.
 
-## Results
+## Results (baseline variant)
 
-## Variant: baseline
 ### cicids2017_multiclass_time_split
 
 | Test set | n | Positives | Prevalence | Precision | Recall | F1 | FPR | PR-AUC | ROC-AUC |
@@ -124,6 +123,61 @@ The causes are the ones in `docs/AUDIT.md`:
 * The CICIDS2017 botnet test set has only 148 flows.
 * Each threshold is the best-F1 point on validation; other operating points
   (for example a fixed FPR budget) would give different precision and recall.
+
+## Generalisation changes: before and after
+
+Each variant adds one change to the previous one (`[[variants]]` in `evaluation/config.toml`).
+Cells show **PR-AUC / F1 / FPR**. F1 and FPR are at the validation-chosen threshold.
+
+| Test | baseline | no_port | no_port+capture_norm | no_port+capture_norm+class_weight |
+|---|---|---|---|---|
+| CICIDS2017 all attacks vs benign (time split) | 0.996 / 0.983 / 0.002 | 0.993 / 0.983 / 0.002 | 0.987 / 0.965 / 0.005 | 0.989 / 0.962 / 0.006 |
+| CICIDS2017 botnet (time split) | 0.999 / 0.977 / 0.000 | 1.000 / 0.993 / 0.000 | 0.994 / 0.990 / 0.000 | 0.996 / 0.291 / 0.002 |
+| CTU-13 s9 Neris (scenario split) | 0.991 / 0.958 / 0.290 | 0.990 / 0.952 / 0.256 | 0.963 / 0.906 / 0.482 | 0.962 / 0.925 / 0.527 |
+| CTU-13 s8 Murlo, unseen family | 0.453 / 0.363 / 0.295 | 0.841 / 0.383 / 0.267 | 0.769 / 0.292 / 0.396 | 0.802 / 0.243 / 0.510 |
+| CICIDS2017 -> CTU-13 s9 | 0.878 / 0.000 / 0.000 | 0.918 / 0.000 / 0.000 | 0.886 / 0.000 / 0.000 | 0.907 / 0.000 / 0.000 |
+| CICIDS2017 -> CTU-13 s8 | 0.251 / 0.000 / 0.000 | 0.329 / 0.000 / 0.000 | 0.150 / 0.000 / 0.000 | 0.246 / 0.000 / 0.000 |
+| CTU-13 -> CICIDS2017 | 0.044 / 0.001 / 0.921 | 0.002 / 0.001 / 0.885 | 0.001 / 0.001 / 0.626 | 0.001 / 0.001 / 0.739 |
+
+Prevalence (the PR-AUC of a random scorer): CTU-13 s9 0.861, s8 0.078, CICIDS2017
+botnet test 0.0005. Full per-class tables for every variant are in
+`eval/results.md`.
+
+**Removing `dst_port` is justified and is the recommended setting.**
+* On the unseen botnet family (CTU-13 s8), PR-AUC rises from 0.453 to 0.841 and
+  FPR falls from 0.295 to 0.267.
+* CICIDS2017 to CTU-13 ranking improves (PR-AUC 0.878 to 0.918 on s9, 0.251 to
+  0.329 on s8).
+* In-distribution performance is unchanged.
+
+The port was a capture shortcut: it scores well on the capture it was learned
+from and misleads everywhere else. The one number that drops, CTU-13 to
+CICIDS2017 PR-AUC (0.044 to 0.002), had come from that shortcut too. Neither
+value is a usable detector at 0.0005 prevalence.
+
+**Per-capture normalisation did not help, and is reported as a negative result.**
+Each capture is centred and scaled by the median and IQR of its own unlabelled
+traffic: all flows of the CICIDS2017 day, or a 2% sample of the CTU-13 scenario's
+Background traffic. This makes the two tools' byte scales comparable, but it hurts
+almost everywhere:
+* CTU-13 s9 FPR rises from 0.256 to 0.482.
+* CICIDS2017 to CTU-13 s8 PR-AUC falls from 0.329 to 0.150.
+
+Absolute flow size carries real signal inside a dataset, and normalisation
+cannot fix the bigger problem: the direction of the feature-to-label relation
+differs between captures (`docs/AUDIT.md`, section 4).
+
+**Class weighting did not help either.** On these splits, balanced sample weights
+change the score scale between validation and test captures. The thresholds
+chosen on validation then transfer worse: CICIDS2017 botnet F1 falls from 0.990
+to 0.291, and CTU-13 s8 FPR rises to 0.510. PR-AUC barely moves, so ranking is
+unaffected; only calibration suffers.
+
+**No variant makes the cross-dataset threshold usable.** CICIDS2017 thresholds
+never fire on CTU-13, and CTU-13 thresholds flag 63-92% of benign CICIDS2017
+flows. A deployment would need thresholds re-calibrated on labelled traffic
+from the target network. With these 7 flow features, generalising across
+networks is an open problem in this project, not a solved one.
 
 The earlier figures in `eval/eval_*.json` and `eval/final_results.json` are
 superseded and should not be cited (see `docs/AUDIT.md`).

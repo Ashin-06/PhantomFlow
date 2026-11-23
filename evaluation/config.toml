@@ -49,3 +49,19 @@ n_jobs = -1
 
 [[variants]]
 name = "baseline"
+
+# Each variant adds one change to the one before it.
+[[variants]]
+name = "no_port"
+drop_port = true
+
+[[variants]]
+name = "no_port+capture_norm"
+drop_port = true
+capture_norm = true
+
+[[variants]]
+name = "no_port+capture_norm+class_weight"
+drop_port = true
+capture_norm = true
+class_weight = true

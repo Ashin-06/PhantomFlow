@@ -2,8 +2,9 @@
 
     python -m evaluation.download
 
-Writes data/cicids2017.parquet and data/ctu13.parquet and deletes the raw
-downloads afterwards (about 1.3 GB transient, under 100 MB kept).
+Writes data/cicids2017.parquet, data/ctu13.parquet and a 2% Background sample
+(data/ctu13_background_sample.parquet), then deletes the raw
+downloads afterwards (about 1.3 GB transient, about 52 MB kept).
 """
 import hashlib
 import io
@@ -69,7 +70,7 @@ def ctu13_class(label: pd.Series) -> pd.Series:
 
 
 def build_ctu13(cfg: dict, data_dir: Path) -> None:
-    parts, counts = [], []
+    parts, counts, bg = [], [], []
     for name, sha in cfg["files"]:
         path = fetch(cfg["base_url"] + name, data_dir / "raw" / "ctu13" / name, sha)
         df = pd.read_parquet(path, columns=["Duration", "DstPort", "TotPkts", "TotBytes",
@@ -83,6 +84,9 @@ def build_ctu13(cfg: dict, data_dir: Path) -> None:
             sys.exit(f"unknown source_file values in {name}")
         counts.append(df.groupby(["scenario", "cls"]).size())
         parts.append(df[df["cls"] != "background"])
+        # 2% of Background per shard: unlabelled reference traffic, used only
+        # for per-capture normalisation statistics, never as a class.
+        bg.append(df[df["cls"] == "background"].sample(frac=0.02, random_state=0))
     df = pd.concat(parts, ignore_index=True)
     df = df.rename(columns={"Duration": "duration_s", "DstPort": "dst_port", "TotPkts": "tot_pkts",
                             "TotBytes": "tot_bytes", "SrcBytes": "src_bytes", "Label": "label_raw",
@@ -91,6 +95,10 @@ def build_ctu13(cfg: dict, data_dir: Path) -> None:
     # Row order inside each original file is time order (binetflow is sorted by StartTime).
     df = df.sort_values(["scenario", "order"]).drop(columns=["source_file"]).reset_index(drop=True)
     df.to_parquet(data_dir / "ctu13.parquet", index=False)
+    ref = pd.concat(bg).rename(columns={"Duration": "duration_s", "DstPort": "dst_port", "TotPkts": "tot_pkts",
+                                        "TotBytes": "tot_bytes", "SrcBytes": "src_bytes"})
+    ref[["scenario", "duration_s", "dst_port", "tot_pkts", "tot_bytes", "src_bytes"]].to_parquet(
+        data_dir / "ctu13_background_sample.parquet", index=False)
     table = pd.concat(counts).groupby(level=[0, 1]).sum().unstack(fill_value=0)
     table.to_csv(data_dir / "ctu13_counts.csv")
     print(table)
