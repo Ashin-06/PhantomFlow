@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xgboost as xgb
+from sklearn.utils.class_weight import compute_sample_weight
 
 from evaluation import features as F
 from evaluation.metrics import best_f1_threshold, binary_report, multiclass_report
@@ -36,9 +37,18 @@ def load(cfg: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
     return cic, ctu
 
 
+def load_references(cfg: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Unlabelled traffic per capture, for capture normalisation."""
+    d = Path(cfg["data_dir"])
+    return (F.cicids_reference(pd.read_parquet(d / "cicids2017.parquet")),
+            F.ctu13_reference(pd.read_parquet(d / "ctu13_background_sample.parquet")))
+
+
 def fit(X, y, cfg: dict, n_class: int = 2):
     model = xgb.XGBClassifier(**cfg["model"], random_state=cfg["seed"])
-    model.fit(X, y)
+    # Class weighting: every class gets the same total weight in training.
+    w = compute_sample_weight("balanced", y) if cfg.get("class_weight") else None
+    model.fit(X, y, sample_weight=w)
     return model
 
 
@@ -63,8 +73,12 @@ def cicids_multiclass(cic: pd.DataFrame, feats: list, cfg: dict) -> dict:
             "attack_vs_benign": binary_report(te["label"].ne("benign"), 1 - p[:, b], thr)}
 
 
-def run_variant(cic: pd.DataFrame, ctu: pd.DataFrame, cfg: dict) -> dict:
-    feats = list(F.FEATURES)
+def run_variant(cic: pd.DataFrame, ctu: pd.DataFrame, cfg: dict, variant: dict, refs=None) -> dict:
+    feats = [f for f in F.FEATURES if not (variant.get("drop_port") and f == "dst_port")]
+    if variant.get("capture_norm"):
+        cic = F.capture_normalise(cic, refs[0], feats)
+        ctu = F.capture_normalise(ctu, refs[1], feats)
+    cfg = {**cfg, "class_weight": variant.get("class_weight", False)}
     cic_bot = cic[cic["label"].isin(["benign", "botnet"])]
     ctu_tests = {f"ctu13-s{s}": ctu[ctu["scenario"] == s] for s in cfg["split"]["ctu13_test"]}
     cic_test = {"cicids2017-test": cic_bot[cic_bot["split"] == "test"]}
@@ -104,7 +118,8 @@ def to_markdown(results: dict) -> str:
 def main() -> None:
     cfg = tomllib.loads(CONFIG.read_text())
     cic, ctu = load(cfg)
-    results = {v["name"]: run_variant(cic, ctu, cfg) for v in cfg["variants"]}
+    refs = load_references(cfg) if any(v.get("capture_norm") for v in cfg["variants"]) else None
+    results = {v["name"]: run_variant(cic, ctu, cfg, v, refs) for v in cfg["variants"]}
     OUT.mkdir(exist_ok=True)
     (OUT / "results.json").write_text(json.dumps(results, indent=2))
     (OUT / "results.md").write_text(to_markdown(results))

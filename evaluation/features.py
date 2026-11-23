@@ -32,17 +32,54 @@ def _derived(out: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def cicids_frame(raw: pd.DataFrame) -> pd.DataFrame:
-    """Raw cicids2017.parquet rows -> FEATURES + label, capture, order."""
-    raw = raw[raw["label_raw"].isin(CICIDS_CLASSES)]
+def cicids_reference(raw: pd.DataFrame) -> pd.DataFrame:
+    """Every flow of each CICIDS2017 day, labels ignored: normalisation reference."""
+    out = _cicids_features(raw)
+    out["capture"] = "cicids2017-" + raw["day"]
+    return out
+
+
+def ctu13_reference(bg: pd.DataFrame) -> pd.DataFrame:
+    """Background sample of each CTU-13 scenario: normalisation reference."""
+    out = _derived(bg[["duration_s", "tot_pkts", "tot_bytes", "src_bytes", "dst_port"]].astype(float))
+    out["capture"] = "ctu13-s" + bg["scenario"].astype(str)
+    return out
+
+
+def capture_normalise(df: pd.DataFrame, ref: pd.DataFrame, feats: list) -> pd.DataFrame:
+    """log1p, then centre and scale each capture by its own median and IQR.
+
+    The statistics come from `ref`, the unlabelled traffic of the same capture,
+    so no labels are used and the test captures need no labels either. This
+    removes per-capture scale differences (tool byte-counting conventions,
+    network speed), not differences in behaviour.
+    """
+    cols = [f for f in feats if f != "dst_port"]
+    out = df.copy()
+    for cap, idx in out.groupby("capture").groups.items():
+        r = np.log1p(ref.loc[ref["capture"] == cap, cols].clip(lower=0))
+        if r.empty:
+            raise ValueError(f"no reference traffic for capture {cap}")
+        iqr = (r.quantile(0.75) - r.quantile(0.25)).replace(0, 1.0)
+        out.loc[idx, cols] = (np.log1p(out.loc[idx, cols].clip(lower=0)) - r.median()) / iqr
+    return out
+
+
+def _cicids_features(raw: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame({
         "duration_s": raw["duration_us"] / 1e6,
         "tot_pkts": raw["fwd_pkts"] + raw["bwd_pkts"],
         "tot_bytes": raw["fwd_bytes"] + raw["bwd_bytes"],
         "src_bytes": raw["fwd_bytes"],
         "dst_port": raw["dst_port"],
-    })
-    out = _derived(out)
+    }).astype(float)
+    return _derived(out)
+
+
+def cicids_frame(raw: pd.DataFrame) -> pd.DataFrame:
+    """Raw cicids2017.parquet rows -> FEATURES + label, capture, order."""
+    raw = raw[raw["label_raw"].isin(CICIDS_CLASSES)]
+    out = _cicids_features(raw)
     out["label"] = raw["label_raw"].map(CICIDS_CLASSES)
     out["capture"] = "cicids2017-" + raw["day"]
     out["order"] = raw["ts"].rank(method="first").to_numpy()
