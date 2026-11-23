@@ -1,4 +1,4 @@
-name: API regression checks
+name: Tests
 on: [push, pull_request]
 permissions:
   contents: read
@@ -19,3 +19,13 @@ jobs:
       - run: python -m pip install -r requirements-api.txt
       - run: python -m pytest -q
       - run: python -m compileall -q api config pipeline
+  evaluation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements-eval.txt
+      - run: python -m pytest -q tests/test_eval_metrics.py tests/test_eval_features.py tests/test_feature_extraction.py tests/test_model_contract.py
