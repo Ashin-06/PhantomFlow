@@ -1,7 +1,7 @@
 # PhantomFlow
-**ML-based covert channel detection in encrypted network traffic. Zero decryption required.**
+**Research prototype: ML-based detection of covert channels in encrypted network traffic from metadata only.**
 
-Detects C2 beaconing, DNS tunneling, and data exfiltration inside TLS 1.3, QUIC, and DNS-over-HTTPS using only packet metadata — no deep packet inspection needed.
+A research prototype that aims to detect C2 beaconing, DNS tunnelling and data exfiltration from packet and flow metadata, without decrypting traffic. Only the flow-level detector has been evaluated on public data, and it does not yet generalise across networks: see [Evaluation results and limits](#evaluation-results-and-limits).
 
 ---
 
@@ -115,7 +115,7 @@ Training uses online streaming — data is fetched and processed chunk-by-chunk 
 |---------|---------|------|
 | CICIDS 2017 (Mon-Fri) | Benign, Botnet C2, DoS, Exfil | ~2.1M |
 | CICIDS 2018 (S3) | Botnet, Infiltration | ~1M |
-| CTU-13 (Scenarios 1, 9) | Real Neris botnet C2 | ~4M |
+| CTU-13 (Scenarios 1, 9) | Neris botnet C2. Background flows are unlabelled and are excluded in `evaluation/`. | ~4M |
 | UNSW-NB15 | Backdoors, Shellcode | ~175K |
 | DNS Exfil (Zeek log) | DNS tunneling | ~50K |
 
@@ -131,19 +131,49 @@ Training uses online streaming — data is fetched and processed chunk-by-chunk 
 
 ---
 
-## Benchmark & Evaluation Results
+## Evaluation results and limits
 
-Recorded evaluation runs (`eval/`) across held-out and out-of-distribution (OOD) encrypted traffic datasets, plus API security regression verification (`docs/audit-2026-10-09.md`):
+The evaluation of record is `python -m evaluation.run` (pinned in
+`evaluation/config.toml`; data fetched with sha256 checks by
+`python -m evaluation.download`). Full tables and the reasoning behind them are
+in [docs/EVALUATION.md](docs/EVALUATION.md). The audit that led to it is in
+[docs/AUDIT.md](docs/AUDIT.md).
 
-| Evaluation Split / Suite | Samples | Key Metric | Result | Source Artifact |
-|--------------------------|---------|------------|--------|-----------------|
-| **CICIDS 2018 (S3 Holdout)** | 109,051 flows | Stage 2 / Stage 3 XGBoost Macro F1 | **1.000** (0.0% stage degradation) | `eval/eval_cicids2018_s3.json` |
-| **CTU-13 Scenario 9 (Neris Botnet C2)** | 102,934 flows | Stage 2 / Stage 3 XGBoost Macro F1 | **0.500** (`AUC C2 Beacon`: 0.317) | `eval/eval_ctu13_scenario9.json` |
-| **UNSW-NB15 (Out-of-Distribution, z=3.0)** | OOD Split | Recall / F1 / Precision | **100.0% Recall**, **0.483 F1** (31.9% Precision) | `eval/final_results.json` |
-| **CTU-13 Scenario 8 (Murlo IRC OOD, z=3.0)** | OOD Split | Recall (high class-imbalance OOD) | **100.0% Recall** (0.23% Precision prior to stage-2 filtering) | `eval/final_results.json` |
-| **API & Dashboard Security Regression** | 29 test cases | Auth, RS256 JWT, RBAC, Outage & Readiness probes | **29 / 29 Passing (100%)** | `docs/audit-2026-10-09.md` |
+Summary, with XGBoost on the 7 flow features that CICIDS2017 and CTU-13 share,
+without the destination port, and with thresholds chosen on validation only:
 
----
+| Setting | PR-AUC | F1 | FPR |
+|---|---|---|---|
+| CICIDS2017, all attacks vs benign, time split | 0.993 | 0.983 | 0.002 |
+| CTU-13 scenario 9 (Neris, family seen in training), scenario split | 0.990 | 0.952 | 0.256 |
+| CTU-13 scenario 8 (Murlo, unseen family), scenario split | 0.841 | 0.383 | 0.267 |
+| Train CICIDS2017, test CTU-13 scenario 9 | 0.918 | 0.000 | 0.000 |
+| Train CTU-13, test CICIDS2017 botnet | 0.002 | 0.001 | 0.885 |
+
+PR-AUC must be read against prevalence: 0.861 on CTU-13 s9, 0.078 on s8 and
+0.0005 for the CICIDS2017 botnet test.
+
+What this means:
+
+* **Within one dataset** the flow features separate attacks well. CICIDS2017
+  contains known shortcuts, though; the destination port alone separates its
+  botnet class at ROC-AUC 0.995.
+* **Across datasets the detector does not generalise.** A threshold calibrated
+  on one dataset either never fires on the other or flags most benign flows.
+  The feature-to-label relation reverses between the two datasets.
+* **Per-capture normalisation and class weighting were tested and did not
+  help** (negative results in docs/EVALUATION.md).
+* **Not evaluated:** the TLS, JA3/JA4, QUIC, DoH and DNS-tunnelling features, the
+  LSTM beacon detector, the Isolation Forest exfiltration detector and the
+  stacked ensemble. The public flow datasets used here do not contain the inputs
+  those components need. No claim is made about their detection performance.
+* Earlier figures (`eval/eval_*.json`, `eval/final_results.json`, and a former
+  "CICIDS 2018 F1 1.000" and "100% recall" in this README) came from flawed
+  evaluations: model selection on the test set, single-class samples and
+  label-mapping bugs. They are superseded.
+
+API and dashboard regression tests: `python -m pytest -q` (see
+[audit notes](docs/audit-2026-10-09.md)).
 
 ## Project Structure
 
@@ -200,20 +230,22 @@ phantomflow/
 
 - **JWT**: RS256 asymmetric tokens (validation doesn't need private key)
 - **RBAC**: Tier1/Tier2/Tier3 analyst roles via LDAP/Active Directory
-- **Secrets**: AWS Secrets Manager / HashiCorp Vault (no env var secrets)
-- **Active Response**: Always requires analyst approval unless confidence > 99%
+- **Secrets**: AWS Secrets Manager / HashiCorp Vault integration in `config/secrets.py`. Local setups read `JWT_SECRET` and other values from `.env`.
+- **Active Response**: actions can be queued for analyst review. Execution returns 501 until an enforcement provider is wired in, so nothing is blocked automatically.
 - **Suppression**: CIDR + port + SNI regex rules to reduce alert fatigue
-- **Audit Log**: Every blocking action is immutably logged with who approved it
+- **Audit Log**: response actions are recorded with the approving analyst (append-only by convention, not enforced by the database).
 
 ---
 
-## Research Features
+## Research components (experimental)
 
-- **Federated Learning**: Multiple deployments share model weights, not raw traffic
-- **Active Learning**: Uncertainty sampling selects most informative flows for analyst review
-- **Concept Drift Detection**: ADWIN + KS-test detect when distribution shifts
-- **Cross-Dataset Validation**: Model must generalize from CICIDS → CTU-13, not just memorize
-- **Temporal Validation**: Time-based splits prevent data leakage in all evaluations
+These modules exist as code but have **not** been evaluated end to end:
+
+- **Federated learning** (`train/federated.py`): weight averaging across deployments.
+- **Active learning** (`train/active_learning.py`): uncertainty sampling for analyst review.
+- **Concept drift detection** (`monitoring/drift_detector.py`): ADWIN and KS tests.
+- **Cross-dataset validation**: implemented in `evaluation/`. It currently shows
+  that the model does **not** generalise from CICIDS2017 to CTU-13 (see above).
 
 ## Audited API and dashboard setup
 
