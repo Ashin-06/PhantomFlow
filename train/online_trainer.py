@@ -501,7 +501,7 @@ class OnlineTrainer:
                 if gain > 0.40 * total_gain:
                     feat_name = PHANTOMFLOW_FEATURES[idx]
                     self._log_and_print(
-                        f"  [WARN] Feature Importance Audit: Feature '{feat_name}' has {gain:.1%} of total XGBoost gain — investigate for leakage!"
+                        f"  [WARN] Feature Importance Audit: Feature '{feat_name}' has {gain:.1%} of total XGBoost gain; investigate for leakage!"
                     )
 
 

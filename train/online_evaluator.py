@@ -45,7 +45,7 @@ class OnlineEvaluator:
         Stream a held-out dataset and evaluate all models.
         Implements the strict Three-Stage Generalization Test Protocol:
         - Stage 2: Cross-dataset holdout metrics.
-        - Stage 3: noise robustness (not adversarial): Gaussian noise (σ=0.1) and checking degradation < 5%.
+        - Stage 3: noise robustness (not adversarial): Gaussian noise (sigma=0.1) and checking degradation < 5%.
         """
         all_y_true  = []
         all_X_scaled = []
