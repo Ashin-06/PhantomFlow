@@ -318,7 +318,7 @@ class LateralMovementMonitor:
         return None
 
     def load(self, path: str):
-        state = torch.load(path, map_location="cpu")
+        state = torch.load(path, map_location="cpu", weights_only=True)
         self.model.load_state_dict(state["model"])
         self.ip_to_id = state.get("ip_to_id", {})
         print(f"[TGN] Loaded from {path}")

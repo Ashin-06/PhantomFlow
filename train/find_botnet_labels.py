@@ -4,7 +4,7 @@ import requests
 url = "https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-42/detailed-bidirectional-flow-labels/capture20110810.binetflow"
 print(f"Scanning stream for botnet labels...")
 headers = {"User-Agent": "PhantomFlow-Research/1.0 (academic use)"}
-resp = requests.get(url, stream=True, headers=headers)
+resp = requests.get(url, stream=True, headers=headers, timeout=60)
 
 unique_labels = set()
 botnet_count = 0

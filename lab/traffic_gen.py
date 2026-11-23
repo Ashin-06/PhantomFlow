@@ -142,11 +142,14 @@ class TrafficGenerator:
         time.sleep(5)  # Wait for tunnel
         
         # Transfer data over tunnel
-        subprocess.run([
-            "dd", "if=/dev/urandom",
-            f"bs={data_size_kb*1024}", "count=1",
-            f"| nc 192.168.99.1 4444"
-        ], shell=True, timeout=duration_s)
+        # dd | nc as two processes: a list with shell=True ran only `dd` and dropped the pipe
+        dd = subprocess.Popen(["dd", "if=/dev/urandom", f"bs={data_size_kb*1024}", "count=1"],
+                              stdout=subprocess.PIPE)
+        try:
+            subprocess.run(["nc", "192.168.99.1", "4444"], stdin=dd.stdout, timeout=duration_s)
+        finally:
+            dd.stdout.close()
+            dd.wait()
         
         iodine_proc.terminate()
         self.stop_capture(session)

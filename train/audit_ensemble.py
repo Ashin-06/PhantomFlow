@@ -12,7 +12,7 @@ def audit_model(path, name):
 
     try:
         if path.endswith(".pt"):
-            weights = torch.load(path, map_location="cpu")
+            weights = torch.load(path, map_location="cpu", weights_only=True)
             print(f"  Type: PyTorch State Dict")
             print(f"  Keys in state dict: {list(weights.keys())}")
             for k, v in weights.items():

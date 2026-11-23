@@ -100,7 +100,7 @@ class PhantomFlowEnsemble:
         
         import torch
         self.lstm_model = LSTMBeaconDetector()
-        self.lstm_model.load_state_dict(torch.load(paths["lstm"], map_location="cpu"))
+        self.lstm_model.load_state_dict(torch.load(paths["lstm"], map_location="cpu", weights_only=True))
         self.lstm_trainer = BeaconTrainer(self.lstm_model, device="cpu")
         
         self.dns_clf = DNSTunnelingClassifier.load(paths["dns"])

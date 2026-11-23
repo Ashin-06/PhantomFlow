@@ -2076,12 +2076,12 @@ function esc(v) { return String(v ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp
       div.setAttribute('onclick', `selectSimAlert('${id}')`);
       div.innerHTML = `
         <div>
-          <span class="sim-feed-title">${title}</span>
-          <div class="sim-feed-meta">${src} &rarr; ${dst}:${port} | Conf: 88%</div>
+          <span class="sim-feed-title">${esc(title)}</span>
+          <div class="sim-feed-meta">${esc(src)} &rarr; ${esc(dst)}:${esc(port)} | Conf: 88%</div>
         </div>
         <div class="sim-actions">
-          <button class="sim-action-btn tp" onclick="actionTriage('${id}', 'confirmed_tp')">TP</button>
-          <button class="sim-action-btn fp" onclick="actionTriage('${id}', 'false_positive')">FP</button>
+          <button class="sim-action-btn tp" onclick="actionTriage('${esc(id)}', 'confirmed_tp')">TP</button>
+          <button class="sim-action-btn fp" onclick="actionTriage('${esc(id)}', 'false_positive')">FP</button>
         </div>
       `;
       feed.appendChild(div);

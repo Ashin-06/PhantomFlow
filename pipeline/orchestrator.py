@@ -23,7 +23,7 @@ LEARNING_MODE = os.getenv("LEARNING_MODE", "False").lower() in ("true", "1")
 secrets = SecretsManager()
 db_creds = secrets.get_db_credentials()
 DATABASE_URL = (
-    f"postgresql://{db_creds.get('user', 'phantom')}:{db_creds.get('password', 'PhantomSecure2026!')}"
+    f"postgresql://{db_creds.get('user', 'phantom')}:{db_creds.get('password', '')}"
     f"@{db_creds.get('host', 'localhost')}:{db_creds.get('port', '5432')}/{db_creds.get('db', 'phantomflow')}"
 )
 
@@ -193,7 +193,7 @@ async def run_pipeline():
     health_thread.start()
     log.info("Lightweight health check server started on port 8080")
 
-    cache = FlowStateCache()
+    cache = FlowStateCache(**{k: v for k, v in redis_options().items() if k in ('host', 'port', 'password')})
     db = Database(DATABASE_URL)
     await db.connect()
 
