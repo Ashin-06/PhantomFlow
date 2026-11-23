@@ -134,12 +134,16 @@ class FullTrainingPipeline:
     STAGE1_TRAIN_DATASETS = [
         # Neris HTTP (primary training)
         ("ctu13_scenario9",  None),
-        ("ctu13_scenario3",  None),   # NEW: Menti botnet
-        ("ctu13_scenario4",  None),   # NEW: Murlo IRC (different from test)
-        ("ctu13_scenario13", None),   # NEW: Donbot
+        ("ctu13_scenario3",  None),   # Rbot
+        ("ctu13_scenario4",  None),   # Rbot
+        ("ctu13_scenario11", None),   # Rbot (was mislabelled scenario 13)
         # CICIDS botnet
         ("cicids2017_botnet", 50000), 
     ]
+
+    # Model selection must not see a test capture. This used to be
+    # ctu13_scenario8, which is also the first test set below.
+    STAGE1_VAL_DATASET = "ctu13_scenario1"
 
     STAGE1_TEST_DATASETS = [
         # NEVER seen during training — true OOD
@@ -202,11 +206,12 @@ class FullTrainingPipeline:
         print(f"\n  Organic data: {len(y_combined):,} flows | C2: {n_c2:,}")
 
         # Stream Scenario 8 (Murlo) in memory for OOD recall protection
-        print("\n  Pre-loading OOD Validation set (ctu13_scenario8) for calibration validation...")
+        print(f"\n  Pre-loading validation set ({self.STAGE1_VAL_DATASET}) for calibration validation...")
         X_val_list, y_val_list = [], []
         try:
-            for chunk in self.streamer.stream("ctu13_scenario8", max_rows=30000):
-                adapted = self.adapter.adapt(chunk, "ctu13_scenario8")
+            assert self.STAGE1_VAL_DATASET not in {k for k, _ in self.STAGE1_TEST_DATASETS}
+            for chunk in self.streamer.stream(self.STAGE1_VAL_DATASET, max_rows=30000):
+                adapted = self.adapter.adapt(chunk, self.STAGE1_VAL_DATASET)
                 if len(adapted) == 0:
                     continue
                 X_val_list.append(adapted[INVARIANT_FEATURES].fillna(0).values)

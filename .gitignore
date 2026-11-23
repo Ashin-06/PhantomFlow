@@ -127,3 +127,6 @@ certs/*.pem
 certs/*.key
 certs/*.crt
 certs/*.pub
+
+# Evaluation datasets (fetched by python -m evaluation.download)
+/data/

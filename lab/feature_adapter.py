@@ -95,9 +95,11 @@ class UniversalAdapter:
         out["pkt_size_max"]     = safe("Fwd Packet Length Max")
         out["orig_bytes"]       = safe("Total Length of Fwd Packets")
         out["resp_bytes"]       = safe("Total Length of Bwd Packets")
-        out["orig_pkts"]        = pd.Series(safe("Total Fwd Packets"), index=df.index).fillna(0) + pd.Series(safe("Total Backward Packets"), index=df.index).fillna(0)
+        # orig_pkts is the originator's packet count (it used to be fwd + bwd).
+        out["orig_pkts"]        = safe("Total Fwd Packets")
         out["resp_pkts"]        = safe("Total Backward Packets")
-        out["failed_connection_ratio"] = safe("RST Flag Count")  # approximate
+        # failed_connection_ratio stays NaN: "RST Flag Count" is a count, not
+        # a ratio, so the feature meant something different per dataset.
 
         # Derived (always compute if source columns exist)
         out["total_bytes"] = out["orig_bytes"].fillna(0) + out["resp_bytes"].fillna(0)
@@ -119,7 +121,8 @@ class UniversalAdapter:
         out["duration_s"]   = pd.to_numeric(df.get("Dur", np.nan), errors="coerce")
         out["total_bytes"]  = pd.to_numeric(df.get("TotBytes", np.nan), errors="coerce")
         out["orig_bytes"]   = pd.to_numeric(df.get("SrcBytes", np.nan), errors="coerce")
-        out["orig_pkts"]    = pd.to_numeric(df.get("TotPkts", np.nan), errors="coerce")
+        # TotPkts counts both directions and Argus gives no per-side split, so
+        # orig_pkts stays NaN instead of meaning something else here.
         out["resp_bytes"]   = out["total_bytes"] - out["orig_bytes"].fillna(0)
         out["bytes_ratio"]  = out["orig_bytes"] / (out["resp_bytes"] + 1)
         out["label"] = df.get("label", 0)
@@ -135,12 +138,12 @@ class UniversalAdapter:
         out["duration_s"]    = safe("dur")
         out["orig_bytes"]    = safe("sbytes")
         out["resp_bytes"]    = safe("dbytes")
-        out["orig_pkts"]     = pd.Series(safe("spkts"), index=df.index).fillna(0) + pd.Series(safe("dpkts"), index=df.index).fillna(0)
+        out["orig_pkts"]     = safe("spkts")
         out["resp_pkts"]     = safe("dpkts")
         out["total_bytes"]   = safe("sbytes") + safe("dbytes")
         out["bytes_ratio"]   = safe("sbytes") / (safe("dbytes") + 1)
         out["pkt_size_mean"] = safe("smeansz")
-        out["failed_connection_ratio"] = safe("synack")  # approximate
+        # failed_connection_ratio stays NaN: synack is a handshake time.
 
         out["label"] = df.get("label", 0)
         return out

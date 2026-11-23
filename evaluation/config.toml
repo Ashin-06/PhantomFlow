@@ -1,0 +1,51 @@
+# Pinned configuration for `python -m evaluation.run`.
+# Thresholds are chosen on the validation split only. Test splits are never
+# used for any choice (features, thresholds, hyperparameters).
+
+seed = 42
+data_dir = "data"
+
+[sources.cicids2017]
+# Corrected CICIDS2017 (Engelen et al., 2021): fixed CICFlowMeter, relabelled,
+# full timestamps. The original UNB download now redirects to a sign-up page.
+url = "https://intrusion-detection.distrinet-research.be/CNS2022/Datasets/CICIDS2017_improved.zip"
+sha256 = "97fdb91d339e2d8cf5627f981b831e5e7e400b981c58181c451a38fd03c48883"
+
+[sources.ctu13]
+# The official host (mcfp.felk.cvut.cz) was unreachable on 2026-11-23. This
+# Hugging Face mirror holds all 13 original binetflow files merged, with the
+# original Label strings and a `source_file` column. It is third-party, so the
+# per-scenario class counts it yields are recorded in docs/EVALUATION.md.
+base_url = "https://huggingface.co/datasets/gosamab/binetflow-dataset/resolve/50f6a12d7b85c923547eeefe50565ef87bbda430/data/"
+files = [
+  ["train-00000-of-00007.parquet", "c6ec98b6b02336d6a707b58017ea58c8a113932598043399a26a7c45741c3ad5"],
+  ["train-00001-of-00007.parquet", "d76410b06f60dd4377a8891c5c6c30fafa29364a6f8effe384af4b0ccdf8aeb1"],
+  ["train-00002-of-00007.parquet", "42be9906e12a965c6040e3528ca1d2f99480154068de828fa44c0aff0f02ea5b"],
+  ["train-00003-of-00007.parquet", "811645fcc1731e9fc2acd7104b7dd3c1a2a44badada6a9ccd40e3e98941aee03"],
+  ["train-00004-of-00007.parquet", "7e03c81585e70af92887692ac2b0d67128a81cf7694df999dc027af074007c47"],
+  ["train-00005-of-00007.parquet", "fd3e29cece08ade8c1c88d8128887d5f7b3996c6abfa8799ccced63cdcc04938"],
+  ["train-00006-of-00007.parquet", "7f3f4d53eb0b50b39bea51d20d0dc867951fee755084fd7d46ecfb781e4c0de8"],
+  ["validation-00000-of-00001.parquet", "f4e339093f6c71b93a8cdcb368df6579609cd1cd2482fd74bc60730ce2b30c1c"],
+  ["test-00000-of-00001.parquet", "34c9f7a73b47f60a8fb70a4745f19062798bfdd271a9acc176797af7726fc64f"],
+]
+
+[split]
+cicids_fracs = [0.6, 0.2, 0.2]
+# CTU-13 scenarios: 9 (Neris) tests a family seen in training (1, 2 are Neris);
+# 8 (Murlo) tests a family never seen in training.
+ctu13_train = [1, 3, 4, 5, 6, 7, 10, 11, 12]
+ctu13_val = [2, 13]
+ctu13_test = [8, 9]
+
+[model]
+# Fixed, not tuned.
+n_estimators = 300
+max_depth = 6
+learning_rate = 0.1
+subsample = 0.8
+colsample_bytree = 0.8
+tree_method = "hist"
+n_jobs = -1
+
+[[variants]]
+name = "baseline"

@@ -133,10 +133,12 @@ STREAMING_DATASETS = {
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=Background": 0,
-            "flow=Normal": 0,
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 2753885,
     },
@@ -149,10 +151,12 @@ STREAMING_DATASETS = {
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=Background": 0,
-            "flow=Normal": 0,
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 1309791,
     },
@@ -165,10 +169,12 @@ STREAMING_DATASETS = {
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=Background": 0,
-            "flow=Normal": 0,
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 100000,
     },
@@ -199,10 +205,12 @@ STREAMING_DATASETS = {
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
-            "flow=Normal": 0,
-            "flow=Background": 0,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 500000,
     },
@@ -212,23 +220,28 @@ STREAMING_DATASETS = {
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
-            "flow=Normal": 0,
-            "flow=Background": 0,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 400000,
     },
-    "ctu13_scenario13": {
+    "ctu13_scenario11": {
+        # Botnet-52 / capture20110818-2 is CTU-13 scenario 11 (Rbot), not 13.
         "url": "https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-52/detailed-bidirectional-flow-labels/capture20110818-2.binetflow",
         "type": "binetflow_http",
         "label_col": "Label",
         "chunk_size": 5000,
         "label_map": {
-            "flow=From-Botnet": 1,
-            "flow=To-Botnet": 1,
-            "flow=Normal": 0,
-            "flow=Background": 0,
+            # CTU-13 labels look like "flow=From-Botnet-V42-..." or
+            # "flow=To-Normal-V42-...": match on the substring. Background
+            # flows are unlabelled (not verified benign), so they are dropped.
+            "Botnet": 1,
+            "Normal": 0,
+            "Background": -1,
         },
         "approx_rows": 600000,
     },
