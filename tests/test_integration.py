@@ -214,3 +214,23 @@ def test_cidr_normalized():
     from api.routes.suppression import clean_cidr
     assert clean_cidr('10.2.3.4/8') == '10.0.0.0/8'
     assert clean_cidr('::1') == '::1/128'
+
+
+@pytest.mark.parametrize('group,expected', [
+    ('CN=PhantomFlow_Admins,OU=Security,DC=corp,DC=local', ['analyst', 'admin']),
+    ('CN=SOC_Tier3,OU=Security,DC=corp,DC=local', ['analyst', 'tier3']),
+    ('CN=phantomflow_admins,OU=Security,DC=corp,DC=local', ['analyst', 'admin']),
+    ('CN=NotPhantomFlow_Admins,OU=Security,DC=corp,DC=local', ['analyst']),
+    ('CN=PhantomFlow_Admins_ReadOnly,OU=Security,DC=corp,DC=local', ['analyst']),
+    ('CN=Staff,OU=PhantomFlow_Admins,DC=corp,DC=local', ['analyst']),
+    ('not-a-distinguished-name-PhantomFlow_Admins', ['analyst']),
+])
+def test_ad_roles_use_exact_group_common_names(monkeypatch, group, expected):
+    monkeypatch.setenv('AD_SERVER_URL', 'ldap://test.invalid')
+    connection = MagicMock()
+    connection.entries = [MagicMock()]
+    connection.entries[0].memberOf.values = [group]
+    monkeypatch.setattr(auth.ldap3, 'Server', MagicMock())
+    monkeypatch.setattr(auth.ldap3, 'Connection', MagicMock(return_value=connection))
+    assert auth.ActiveDirectoryAuth().authenticate('tester', 'secret') == expected
+    connection.unbind.assert_called_once()
